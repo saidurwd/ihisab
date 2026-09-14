@@ -4,7 +4,8 @@
  * Controller is the customized base controller class.
  * All controller classes for this application should extend from this base class.
  */
-class Controller extends CController {
+class Controller extends CController
+{
 
     public $userData;
 
@@ -26,37 +27,44 @@ class Controller extends CController {
      */
     public $breadcrumbs = array();
 
-    public function filters() {
+    public function filters()
+    {
         return array(
             'accessControl',
         );
     }
 
-    public function accessRules() {
+    public function accessRules()
+    {
         return array(
-            array('allow',
+            array(
+                'allow',
                 'users' => array('*'),
                 'actions' => array('login'),
             ),
-            array('allow',
+            array(
+                'allow',
                 'users' => array('@'),
             ),
-            array('deny',
+            array(
+                'deny',
                 'users' => array('*'),
             ),
         );
     }
 
-    public function init() {
+    public function init()
+    {
         $this->statistics();
     }
 
-    public function checkAccess($controller, $action) {
+    public function checkAccess($controller, $action)
+    {
         $val = Yii::app()->db->createCommand()
-                ->select('access')
-                ->from('{{acl}}')
-                ->where('LOWER(controller)="' . $controller . '" AND LOWER(actions)="' . $action . '" AND group_id=' . Yii::app()->user->group . ' AND controller_type=0')
-                ->queryScalar();
+            ->select('access')
+            ->from('{{acl}}')
+            ->where('LOWER(controller)="' . $controller . '" AND LOWER(actions)="' . $action . '" AND group_id=' . Yii::app()->user->group . ' AND controller_type=0')
+            ->queryScalar();
         if (empty($val)) {
             $val = 1;
         } else {
@@ -65,7 +73,12 @@ class Controller extends CController {
         return $val;
     }
 
-    public function statistics() {
+    public function statistics()
+    {
+        $criteria = new CDbCriteria;
+        $criteria->condition = 'server_time < DATE_SUB(NOW(), INTERVAL 7 DAY)';
+        Visitor::model()->deleteAll($criteria);
+
         $model = new Visitor;
         $model->user_type = 0;
         $model->user_id = Yii::app()->user->id;
@@ -78,10 +91,12 @@ class Controller extends CController {
         $model->save();
     }
 
-    public function keepAlive() {
+    public function keepAlive()
+    {
         if (!Yii::app()->user->isGuest) {
             User::model()->updateByPk(
-                    Yii::app()->user->id, array('lastvisitDate' => date('Y-m-d H:i:s'))
+                Yii::app()->user->id,
+                array('lastvisitDate' => date('Y-m-d H:i:s'))
             );
         }
     }
