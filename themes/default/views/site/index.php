@@ -37,10 +37,168 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
     </div>
 </div>
 <!-- widget grid -->
-
 <section id="widget-grid" class="">
     <!-- row -->
     <div class="row">
+    <article class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+        <div class="jarviswidget" id="wid-id-accounts" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-university"></i> </span>
+                <h2 style="text-transform: uppercase;">Account Balances</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php if (!empty($accounts)): ?>
+                        <table class="table table-bordered table-striped table-hover smart-form">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Account</th>
+                                    <th style="text-align: right;">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($accounts as $account): ?>
+                                    <tr>
+                                        <td style="text-align: left;"><?php echo CHtml::encode($account->account_name); ?></td>
+                                        <td style="text-align: right;"><?php echo Account::get_balance($account->id); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <div class="padding-10 text-center">No accounts found.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </article>
+    <article class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+        <div class="jarviswidget" id="wid-id-recent" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-list-alt"></i> </span>
+                <h2 style="text-transform: uppercase;">Recent Transactions</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php if (!empty($recentTransactions)): ?>
+                        <table class="table table-bordered table-striped table-hover smart-form">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Date</th>
+                                    <th style="text-align: left;">Description</th>
+                                    <th style="text-align: right;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($recentTransactions as $tx): ?>
+                                    <tr>
+                                        <td style="text-align: left; white-space: nowrap;"><?php echo date('M d, Y', strtotime($tx->created)); ?></td>
+                                        <td style="text-align: left;"><?php echo CHtml::encode($tx->description); ?></td>
+                                        <td style="text-align: right;"><?php echo Transaction::get_amount($tx->transaction_type, $tx->amount); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <div class="padding-10 text-center">No recent transactions.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </article>
+    <article class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+        <div class="jarviswidget" id="wid-id-budget" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-tasks"></i> </span>
+                <h2 style="text-transform: uppercase;">Budget Utilization</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php TransactionBudget::getBudgetChart(); ?>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>
+<!-- end row -->
+<!-- row -->
+<div class="row">
+    <article class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+        <div class="jarviswidget" id="wid-id-monthly-trend" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-line-chart"></i> </span>
+                <h2 style="text-transform: uppercase;">Monthly Income vs Expense Trend</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php if (!empty($monthlyTrendLabels)): ?>
+                        <div id="monthlyTrendChart" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
+                    <?php else: ?>
+                        <div class="padding-10 text-center">No monthly data available yet.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </article>
+    <article class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+        <div class="jarviswidget" id="wid-id-expense-breakdown" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-pie-chart"></i> </span>
+                <h2 style="text-transform: uppercase;">Expense Breakdown by Tag</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php if (!empty($expenseChartData)): ?>
+                        <div id="expenseBreakdownChart" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
+                    <?php else: ?>
+                        <div class="padding-10 text-center">No expense data available for this month.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>
+<!-- end row -->
+<!-- row -->
+<div class="row">
+    <article class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+        <div class="jarviswidget" id="wid-id-income-breakdown" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-pie-chart"></i> </span>
+                <h2 style="text-transform: uppercase;">Income by Category</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php if (!empty($incomeChartData)): ?>
+                        <div id="incomeBreakdownChart" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
+                    <?php else: ?>
+                        <div class="padding-10 text-center">No income data available for this month.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </article>
+    <article class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+        <div class="jarviswidget" id="wid-id-balance-trend" data-widget-editbutton="false">
+            <header>
+                <span class="widget-icon"> <i class="fa fa-area-chart"></i> </span>
+                <h2 style="text-transform: uppercase;">Net Worth Trend (12 Months)</h2>
+            </header>
+            <div>
+                <div class="widget-body no-padding">
+                    <?php if (!empty($balanceChartData)): ?>
+                        <div id="balanceTrendChart" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
+                    <?php else: ?>
+                        <div class="padding-10 text-center">No balance data available yet.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>
+<!-- end row -->
+<!-- row -->
+<div class="row">
         <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
             <div class="jarviswidget" id="wid-id-2" data-widget-editbutton="false">
                 <header>
@@ -116,12 +274,10 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                                                         <i class="fa fa-plus-square"></i>
                                                     </span>
                                                     <i class="fa fa-folder" style="color: #f0ad4e;"></i>
-                                                <?php else: ?>
-                                                    <i class="fa fa-tag" style="color: #337ab7;"></i>
+<?php else: ?>
+    <i class="fa fa-tag" style="color: #337ab7;"></i>
 <?php endif; ?>
-</section>
-<!-- end widget grid -->
-                                                <?php echo CHtml::encode($node['tag_name']); ?>
+<?php echo CHtml::encode($node['tag_name']); ?>
                                             </td>
                                             <td style="text-align: right;">
                                                 <?php echo Transaction::get_amount(1, $node['expense_total']); ?>
@@ -338,4 +494,167 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
             });
         });
     </script>
-<?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (!empty($monthlyTrendLabels)): ?>
+        <script type="text/javascript">
+            $(function () {
+                var categories = <?php echo $monthlyTrendLabels; ?>;
+                var incomeData = <?php echo json_encode($monthlyTrendIncome); ?>;
+                var expenseData = <?php echo json_encode($monthlyTrendExpense); ?>;
+
+                $('#monthlyTrendChart').highcharts({
+                    chart: {
+                        type: 'column'
+                    },
+                    title: {
+                        text: 'Monthly Income vs Expense'
+                    },
+                    xAxis: {
+                        categories: categories,
+                        crosshair: true
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: 'Amount'
+                        }
+                    },
+                    tooltip: {
+                        shared: true
+                    },
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        }
+                    },
+                    series: [{
+                        name: 'Income',
+                        data: incomeData
+                    }, {
+                        name: 'Expense',
+                        data: expenseData
+                    }]
+                });
+            });
+        </script>
+    <?php endif; ?>
+
+    <?php if (!empty($expenseChartData)): ?>
+        <script type="text/javascript">
+            $(function () {
+                $('#expenseBreakdownChart').highcharts({
+                    chart: {
+                        type: 'pie'
+                    },
+                    title: {
+                        text: 'Expense Breakdown by Tag'
+                    },
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.y}</b>'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                style: {
+                                    width: '120px'
+                                }
+                            }
+                        }
+                    },
+                    series: [{
+                        name: 'Expense',
+                        colorByPoint: true,
+                        data: [<?php echo $expenseChartData; ?>]
+                    }]
+                });
+            });
+        </script>
+    <?php endif; ?>
+
+    <?php if (!empty($incomeChartData)): ?>
+        <script type="text/javascript">
+            $(function () {
+                $('#incomeBreakdownChart').highcharts({
+                    chart: {
+                        type: 'pie'
+                    },
+                    title: {
+                        text: 'Income by Category'
+                    },
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.y}</b>'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                style: {
+                                    width: '120px'
+                                }
+                            }
+                        }
+                    },
+                    series: [{
+                        name: 'Income',
+                        colorByPoint: true,
+                        data: [<?php echo $incomeChartData; ?>]
+                    }]
+                });
+            });
+        </script>
+    <?php endif; ?>
+
+    <?php if (!empty($balanceChartData)): ?>
+        <script type="text/javascript">
+            $(function () {
+                var categories = <?php echo Account::last_twelve_months(); ?>;
+                var data = <?php echo json_encode($balanceChartData); ?>;
+
+                $('#balanceTrendChart').highcharts({
+                    chart: {
+                        type: 'area'
+                    },
+                    title: {
+                        text: 'Net Worth Trend (12 Months)'
+                    },
+                    xAxis: {
+                        categories: categories,
+                        crosshair: true
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Amount'
+                        }
+                    },
+                    tooltip: {
+                        shared: true,
+                        valuePrefix: ''
+                    },
+                    plotOptions: {
+                        area: {
+                            stacking: 'normal',
+                            lineColor: '#666666',
+                            lineWidth: 1,
+                            marker: {
+                                lineWidth: 1,
+                                lineColor: '#666666'
+                            }
+                        }
+                    },
+                    series: [{
+                        name: 'Net Worth',
+                        data: data
+                    }]
+                });
+            });
+        </script>
+    <?php endif; ?>

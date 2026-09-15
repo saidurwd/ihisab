@@ -74,12 +74,44 @@ class SiteController extends Controller
         $treeData = Tag::getHierarchicalReport($month, $year);
         $yearlyData = Transaction::getYearlyIncomeExpanse();
 
+        $accounts = Account::model()->findAll(array(
+            'condition' => 'user=' . Yii::app()->user->id,
+        ));
+        $recentTransactions = Transaction::model()->findAll(array(
+            'condition' => 'user=' . Yii::app()->user->id,
+            'order' => 'created DESC',
+            'limit' => 10,
+        ));
+
+        $monthlyTrendLabels = Account::last_twelve_months();
+        $monthlyTrendIncome = array();
+        $monthlyTrendExpense = array();
+        for ($t = 0; $t < 12; $t++) {
+            $date = date('Y-m-t', strtotime(date('Y-m-01') . " -$t months"));
+            $monthlyTrendIncome[] = (float)Transaction::get_income_specific_month($date);
+            $monthlyTrendExpense[] = (float)Transaction::get_expense_specific_month($date);
+        }
+        $monthlyTrendIncome = array_reverse($monthlyTrendIncome);
+        $monthlyTrendExpense = array_reverse($monthlyTrendExpense);
+
+        $expenseChartData = Transaction::dashboardExpenseChart();
+        $incomeChartData = Transaction::dashboardIncomeChart();
+        $balanceChartData = Transaction::accountBalanceChart();
+
         $this->render('index', array(
             'model_dashboard_report' => $model_dashboard_report,
             'treeData' => $treeData,
             'selectedMonth' => $month,
             'selectedYear' => $year,
             'yearlyData' => $yearlyData,
+            'accounts' => $accounts,
+            'recentTransactions' => $recentTransactions,
+            'monthlyTrendLabels' => $monthlyTrendLabels,
+            'monthlyTrendIncome' => $monthlyTrendIncome,
+            'monthlyTrendExpense' => $monthlyTrendExpense,
+            'expenseChartData' => $expenseChartData,
+            'incomeChartData' => $incomeChartData,
+            'balanceChartData' => $balanceChartData,
         ));
     }
 
