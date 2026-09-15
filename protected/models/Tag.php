@@ -382,6 +382,105 @@ class Tag extends CActiveRecord
         return number_format($balance, 2, '.', '');
     }
 
+    public static function getHierarchicalReport($month, $year)
+    {
+        $user = Yii::app()->user->id;
+
+        $tags = Tag::model()->findAll(array(
+            'condition' => 'user IN(0,' . $user . ') OR user IS NULL',
+            'order' => 'path, id',
+        ));
+
+        if (empty($tags)) {
+            return array();
+        }
+
+        $tagMap = array();
+        foreach ($tags as $tag) {
+            $tagMap[$tag->id] = array(
+                'id' => $tag->id,
+                'tag_name' => $tag->tag_name,
+                'alias' => $tag->alias,
+                'parent_tag' => $tag->parent_tag,
+                'path' => $tag->path,
+                'level' => substr_count($tag->path, '.') - 1,
+                'expense_direct' => 0,
+                'income_direct' => 0,
+                'expense_total' => 0,
+                'income_total' => 0,
+                'children' => array(),
+            );
+        }
+
+        $expenseRows = Yii::app()->db->createCommand()
+            ->select('tt.tag as tag_id, IFNULL(SUM(t.amount),0) as total')
+            ->from('{{transaction_tag}} tt')
+            ->join('{{transaction}} t', 't.id=tt.transaction')
+            ->where('t.user=' . $user . ' AND t.transaction_type IN(1) AND MONTH(t.created)=' . $month . ' AND YEAR(t.created)=' . $year)
+            ->group('tt.tag')
+            ->queryAll();
+
+        foreach ($expenseRows as $row) {
+            if (isset($tagMap[$row['tag_id']])) {
+                $tagMap[$row['tag_id']]['expense_direct'] = abs($row['total']);
+            }
+        }
+
+        $incomeRows = Yii::app()->db->createCommand()
+            ->select('tt.tag as tag_id, IFNULL(SUM(t.amount),0) as total')
+            ->from('{{transaction_tag}} tt')
+            ->join('{{transaction}} t', 't.id=tt.transaction')
+            ->where('t.user=' . $user . ' AND t.transaction_type IN(2,4) AND MONTH(t.created)=' . $month . ' AND YEAR(t.created)=' . $year)
+            ->group('tt.tag')
+            ->queryAll();
+
+        foreach ($incomeRows as $row) {
+            if (isset($tagMap[$row['tag_id']])) {
+                $tagMap[$row['tag_id']]['income_direct'] = abs($row['total']);
+            }
+        }
+
+        $roots = array();
+        foreach ($tagMap as $id => &$tag) {
+            $parent = $tag['parent_tag'];
+            if ($parent == 0 || $parent === null || !isset($tagMap[$parent])) {
+                $roots[] = &$tag;
+            } else {
+                $tagMap[$parent]['children'][] = &$tag;
+            }
+        }
+        unset($tag);
+
+        $computeTotals = function (&$node) use (&$computeTotals) {
+            $node['expense_total'] = $node['expense_direct'];
+            $node['income_total'] = $node['income_direct'];
+
+            foreach ($node['children'] as &$child) {
+                $computeTotals($child);
+                $node['expense_total'] += $child['expense_total'];
+                $node['income_total'] += $child['income_total'];
+            }
+        };
+
+        foreach ($roots as &$root) {
+            $computeTotals($root);
+        }
+        unset($root);
+
+        $result = array();
+        $flatten = function ($nodes) use (&$flatten, &$result) {
+            foreach ($nodes as $node) {
+                $result[] = $node;
+                if (!empty($node['children'])) {
+                    $flatten($node['children']);
+                }
+            }
+        };
+        $flatten($roots);
+
+        return $result;
+    }
+
     public static function getData($id, $field)
     {
         $value = Tag::model()->findByAttributes(array('id' => $id));

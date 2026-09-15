@@ -69,8 +69,15 @@ class SiteController extends Controller
         if (isset($_GET['Tag']))
             $model_dashboard_report->attributes = $_GET['Tag'];
 
+        $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
+        $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+        $treeData = Tag::getHierarchicalReport($month, $year);
+
         $this->render('index', array(
             'model_dashboard_report' => $model_dashboard_report,
+            'treeData' => $treeData,
+            'selectedMonth' => $month,
+            'selectedYear' => $year,
         ));
     }
 
