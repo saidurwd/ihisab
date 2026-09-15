@@ -46,32 +46,33 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                 <header>
                     <span class="widget-icon"> <i class="fa fa-sitemap"></i> </span>
                     <h2 style="text-transform: uppercase;">Hierarchical Tag Report</h2>
-                    <div class="pull-right" style="padding: 1px 15px;">
-                        <form class="smart-form" action="<?php echo Yii::app()->createUrl('site/index'); ?>"
-                            method="get" style="display: inline;">
-                            <select name="month" class="form-control input-xs" style="width: auto; display: inline;"
-                                onchange="this.form.submit()">
-                                <?php for ($m = 1; $m <= 12; $m++): ?>
-                                    <option value="<?php echo $m; ?>" <?php echo $selectedMonth == $m ? 'selected="selected"' : ''; ?>>
-                                        <?php echo date('F', mktime(0, 0, 0, $m, 1)); ?>
-                                    </option>
-                                <?php endfor; ?>
-                            </select>
-                            <select name="year" class="form-control input-xs" style="width: auto; display: inline;"
-                                onchange="this.form.submit()">
-                                <?php for ($y = date('Y') - 5; $y <= date('Y'); $y++): ?>
-                                    <option value="<?php echo $y; ?>" <?php echo $selectedYear == $y ? 'selected="selected"' : ''; ?>>
-                                        <?php echo $y; ?>
-                                    </option>
-                                <?php endfor; ?>
-                            </select>
-                        </form>
-                        <button type="button" class="btn btn-xs btn-default" id="btn-expand-all">Expand All</button>
-                        <button type="button" class="btn btn-xs btn-default" id="btn-collapse-all">Collapse All</button>
-                    </div>
                 </header>
                 <div>
                     <div class="widget-body no-padding">
+                        <div class="pull-right" style="padding: 2px 6px;">
+                            <form class="smart-form" action="<?php echo Yii::app()->createUrl('site/index'); ?>"
+                                method="get" style="display: inline;">
+                                <select name="month" class="form-control input-xs" style="width: auto; display: inline;"
+                                    onchange="this.form.submit()">
+                                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                                        <option value="<?php echo $m; ?>" <?php echo $selectedMonth == $m ? 'selected="selected"' : ''; ?>>
+                                            <?php echo date('F', mktime(0, 0, 0, $m, 1)); ?>
+                                        </option>
+                                    <?php endfor; ?>
+                                </select>
+                                <select name="year" class="form-control input-xs" style="width: auto; display: inline;"
+                                    onchange="this.form.submit()">
+                                    <?php for ($y = date('Y') - 5; $y <= date('Y'); $y++): ?>
+                                        <option value="<?php echo $y; ?>" <?php echo $selectedYear == $y ? 'selected="selected"' : ''; ?>>
+                                            <?php echo $y; ?>
+                                        </option>
+                                    <?php endfor; ?>
+                                </select>
+                            </form>
+                            <button type="button" class="btn btn-xs btn-primary" id="btn-expand-all" style="margin-left: 10px;">EXPAND</button>
+                            <button type="button" class="btn btn-xs btn-default"
+                                id="btn-collapse-all">COLLAPPSE</button>
+                        </div>
                         <style>
                             .tree-child {
                                 display: none;
