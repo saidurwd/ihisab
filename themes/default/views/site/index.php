@@ -47,7 +47,8 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                     <span class="widget-icon"> <i class="fa fa-sitemap"></i> </span>
                     <h2 style="text-transform: uppercase;">Hierarchical Tag Report</h2>
                     <div class="pull-right" style="padding: 1px 15px;">
-                        <form class="smart-form" action="" method="get" style="display: inline;">
+                        <form class="smart-form" action="<?php echo Yii::app()->createUrl('site/index'); ?>"
+                            method="get" style="display: inline;">
                             <select name="month" class="form-control input-xs" style="width: auto; display: inline;"
                                 onchange="this.form.submit()">
                                 <?php for ($m = 1; $m <= 12; $m++): ?>
@@ -222,5 +223,30 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
         </article>
     </div>
     <!-- end row -->
+    <!-- row -->
+    <div class="row">
+        <!-- NEW WIDGET START -->
+        <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <!-- Widget ID (each widget will need unique ID)-->
+            <div class="jarviswidget" id="wid-id-2" data-widget-editbutton="false">
+                <header>
+                    <span class="widget-icon"> <i class="fa fa-bar-chart"></i> </span>
+                    <h2 style="text-transform: uppercase;">Income vs. Expenses by Year</h2>
+                </header>
+                <!-- widget div-->
+                <div>
+                    <!-- widget content -->
+                    <div class="widget-body no-padding">
+                        <?php Transaction::getYearlyIncomeExpanse(); ?>
+                    </div>
+                    <!-- end widget content -->
+                </div>
+                <!-- end widget div -->
+            </div>
+            <!-- end widget -->
+        </article>
+        <!-- WIDGET END -->
+    </div>
+    <!-- end row -->ß
 </section>
 <!-- end widget grid -->

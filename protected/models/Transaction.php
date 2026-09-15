@@ -142,7 +142,7 @@ class Transaction extends CActiveRecord
         $criteria->alias = 't';
         $criteria->select = 't.*';
         $criteria->join = 'LEFT JOIN {{transaction_tag}} tt ON tt.transaction=t.id';
-//        $criteria->condition = 'FIND_IN_SET("' . $tags . '", t.tag)>0 AND t.user=' . Yii::app()->user->id;
+        //        $criteria->condition = 'FIND_IN_SET("' . $tags . '", t.tag)>0 AND t.user=' . Yii::app()->user->id;
         $criteria->condition = 'tt.tag IN(' . $tags . ') AND t.user=' . Yii::app()->user->id;
         $criteria->group = 't.id';
 
@@ -544,5 +544,39 @@ class Transaction extends CActiveRecord
         }
         return $return;
     }
+
+    public static function getYearlyIncomeExpanse()
+    {
+        $connection = Yii::app()->db;
+        $command = $connection->createCommand('SELECT 
+                    YEAR(created) AS year,
+                    -- Total Income
+                    SUM(CASE WHEN transaction_type = 1 THEN amount ELSE 0 END) AS total_income,
+                    -- Total Expense
+                    SUM(CASE WHEN transaction_type = 2 THEN amount ELSE 0 END) AS total_expense,
+                    -- Profit / Loss
+                    SUM(CASE WHEN transaction_type = 1 THEN amount ELSE 0 END) -
+                    SUM(CASE WHEN transaction_type = 2 THEN amount ELSE 0 END) AS net_result
+                FROM os_transaction
+                WHERE status = 1 AND `user` = ' . Yii::app()->user->id . '
+                GROUP BY YEAR(created)
+                ORDER BY year DESC');
+        $array = $command->queryAll();
+
+        echo '<table class="table table-bordered table-striped table-hover smart-form">';
+        echo '<thead><tr><th>Year</th><th>Income</th><th>Expanse</th><th>Net Balance</th></tr></thead>';
+        echo '<tbody>';
+        foreach ($array as $key => $values) {
+            echo '<tr>';
+            echo '<td>' . $values['year'] . '</td>';
+            echo '<td>' . number_format($values['total_income'], 0, '.', ',') . '</td>';
+            echo '<td>' . number_format($values['total_expense'], 0, '.', ',') . '</td>';
+            echo '<td>' . number_format($values['net_result'], 0, '.', ',') . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody>';
+        echo '</table>';
+    }
+
 
 }
