@@ -71,32 +71,75 @@ class SiteController extends Controller
 
         $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
         $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
-        $treeData = Tag::getHierarchicalReport($month, $year);
-        $yearlyData = Transaction::getYearlyIncomeExpanse();
+        $userId = Yii::app()->user->id;
 
-        $accounts = Account::model()->findAll(array(
-            'condition' => 'user=' . Yii::app()->user->id,
-        ));
-        $recentTransactions = Transaction::model()->findAll(array(
-            'condition' => 'user=' . Yii::app()->user->id,
-            'order' => 'created DESC',
-            'limit' => 10,
-        ));
+        $treeData = Yii::app()->cache->get('dashboard_tree_' . $userId . '_' . $month . '_' . $year);
+        if ($treeData === false) {
+            $treeData = Tag::getHierarchicalReport($month, $year);
+            Yii::app()->cache->set('dashboard_tree_' . $userId . '_' . $month . '_' . $year, $treeData, 300);
+        }
+
+        $yearlyData = Yii::app()->cache->get('dashboard_yearly_' . $userId);
+        if ($yearlyData === false) {
+            $yearlyData = Transaction::getYearlyIncomeExpanse();
+            Yii::app()->cache->set('dashboard_yearly_' . $userId, $yearlyData, 1800);
+        }
+
+        $accounts = Yii::app()->cache->get('dashboard_accounts_' . $userId);
+        if ($accounts === false) {
+            $accounts = Account::model()->findAll(array(
+                'condition' => 'user=' . $userId,
+            ));
+            Yii::app()->cache->set('dashboard_accounts_' . $userId, $accounts, 600);
+        }
+
+        $recentTransactions = Yii::app()->cache->get('dashboard_recent_' . $userId);
+        if ($recentTransactions === false) {
+            $recentTransactions = Transaction::model()->findAll(array(
+                'condition' => 'user=' . $userId,
+                'order' => 'created DESC',
+                'limit' => 10,
+            ));
+            Yii::app()->cache->set('dashboard_recent_' . $userId, $recentTransactions, 300);
+        }
 
         $monthlyTrendLabels = Account::last_twelve_months();
-        $monthlyTrendIncome = array();
-        $monthlyTrendExpense = array();
-        for ($t = 0; $t < 12; $t++) {
-            $date = date('Y-m-t', strtotime(date('Y-m-01') . " -$t months"));
-            $monthlyTrendIncome[] = (float)Transaction::get_income_specific_month($date);
-            $monthlyTrendExpense[] = (float)Transaction::get_expense_specific_month($date);
+        $monthlyTrendCacheKey = 'dashboard_monthly_trend_' . $userId;
+        $monthlyTrend = Yii::app()->cache->get($monthlyTrendCacheKey);
+        if ($monthlyTrend === false) {
+            $monthlyTrendIncome = array();
+            $monthlyTrendExpense = array();
+            for ($t = 0; $t < 12; $t++) {
+                $date = date('Y-m-t', strtotime(date('Y-m-01') . " -$t months"));
+                $monthlyTrendIncome[] = (float)Transaction::get_income_specific_month($date);
+                $monthlyTrendExpense[] = (float)Transaction::get_expense_specific_month($date);
+            }
+            $monthlyTrend = array(
+                'income' => array_reverse($monthlyTrendIncome),
+                'expense' => array_reverse($monthlyTrendExpense),
+            );
+            Yii::app()->cache->set($monthlyTrendCacheKey, $monthlyTrend, 900);
         }
-        $monthlyTrendIncome = array_reverse($monthlyTrendIncome);
-        $monthlyTrendExpense = array_reverse($monthlyTrendExpense);
+        $monthlyTrendIncome = $monthlyTrend['income'];
+        $monthlyTrendExpense = $monthlyTrend['expense'];
 
-        $expenseChartData = Transaction::dashboardExpenseChart();
-        $incomeChartData = Transaction::dashboardIncomeChart();
-        $balanceChartData = Transaction::accountBalanceChart();
+        $expenseChartData = Yii::app()->cache->get('dashboard_expense_chart_' . $userId);
+        if ($expenseChartData === false) {
+            $expenseChartData = Transaction::dashboardExpenseChart();
+            Yii::app()->cache->set('dashboard_expense_chart_' . $userId, $expenseChartData, 600);
+        }
+
+        $incomeChartData = Yii::app()->cache->get('dashboard_income_chart_' . $userId);
+        if ($incomeChartData === false) {
+            $incomeChartData = Transaction::dashboardIncomeChart();
+            Yii::app()->cache->set('dashboard_income_chart_' . $userId, $incomeChartData, 600);
+        }
+
+        $balanceChartData = Yii::app()->cache->get('dashboard_balance_chart_' . $userId);
+        if ($balanceChartData === false) {
+            $balanceChartData = Transaction::accountBalanceChart();
+            Yii::app()->cache->set('dashboard_balance_chart_' . $userId, $balanceChartData, 900);
+        }
 
         $this->render('index', array(
             'model_dashboard_report' => $model_dashboard_report,

@@ -59,6 +59,10 @@ return array(
             'charset' => 'utf8',
             'tablePrefix' => 'os_'
         ),
+        'cache' => array(
+            'class' => 'CFileCache',
+            'cachePath' => dirname(__FILE__) . '/../runtime/cache',
+        ),
         'errorHandler' => array(
             // use 'site/error' action to display errors
             'errorAction' => 'site/error',
