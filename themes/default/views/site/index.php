@@ -499,7 +499,7 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
     <?php if (!empty($monthlyTrendLabels)): ?>
         <script type="text/javascript">
             $(function () {
-                var categories = <?php echo $monthlyTrendLabels; ?>;
+                var categories = <?php echo json_encode($monthlyTrendLabels); ?>;
                 var incomeData = <?php echo json_encode($monthlyTrendIncome); ?>;
                 var expenseData = <?php echo json_encode($monthlyTrendExpense); ?>;
 
@@ -616,7 +616,7 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
     <?php if (!empty($balanceChartData)): ?>
         <script type="text/javascript">
             $(function () {
-                var categories = <?php echo Account::last_twelve_months(); ?>;
+                var categories = [<?php echo Account::last_twelve_months(); ?>];
                 var data = <?php echo json_encode($balanceChartData); ?>;
 
                 $('#balanceTrendChart').highcharts({

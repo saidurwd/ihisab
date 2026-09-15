@@ -103,23 +103,26 @@ class SiteController extends Controller
             Yii::app()->cache->set('dashboard_recent_' . $userId, $recentTransactions, 300);
         }
 
-        $monthlyTrendLabels = Account::last_twelve_months();
-        $monthlyTrendCacheKey = 'dashboard_monthly_trend_' . $userId;
+        $monthlyTrendLabels = array();
+        $monthlyTrendCacheKey = 'dashboard_monthly_trend_v2_' . $userId;
         $monthlyTrend = Yii::app()->cache->get($monthlyTrendCacheKey);
-        if ($monthlyTrend === false) {
+        if ($monthlyTrend === false || !isset($monthlyTrend['labels'], $monthlyTrend['income'], $monthlyTrend['expense'])) {
             $monthlyTrendIncome = array();
             $monthlyTrendExpense = array();
             for ($t = 0; $t < 12; $t++) {
                 $date = date('Y-m-t', strtotime(date('Y-m-01') . " -$t months"));
+                $monthlyTrendLabels[] = date('M y', strtotime($date));
                 $monthlyTrendIncome[] = (float)Transaction::get_income_specific_month($date);
                 $monthlyTrendExpense[] = (float)Transaction::get_expense_specific_month($date);
             }
             $monthlyTrend = array(
+                'labels' => array_reverse($monthlyTrendLabels),
                 'income' => array_reverse($monthlyTrendIncome),
                 'expense' => array_reverse($monthlyTrendExpense),
             );
             Yii::app()->cache->set($monthlyTrendCacheKey, $monthlyTrend, 900);
         }
+        $monthlyTrendLabels = $monthlyTrend['labels'];
         $monthlyTrendIncome = $monthlyTrend['income'];
         $monthlyTrendExpense = $monthlyTrend['expense'];
 
@@ -138,6 +141,7 @@ class SiteController extends Controller
         $balanceChartData = Yii::app()->cache->get('dashboard_balance_chart_' . $userId);
         if ($balanceChartData === false) {
             $balanceChartData = Transaction::accountBalanceChart();
+            $balanceChartData = array_map('floatval', explode(',', trim($balanceChartData, ',')));
             Yii::app()->cache->set('dashboard_balance_chart_' . $userId, $balanceChartData, 900);
         }
 
