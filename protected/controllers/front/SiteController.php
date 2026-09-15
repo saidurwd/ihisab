@@ -63,18 +63,12 @@ class SiteController extends Controller
     public function actionIndex()
     {
         Yii::app()->clientScript->registerMetaTag("iHisab, Hisab, money management, personal finance, budgeting, shared bills, shared expense, roommates, reminder, forecasting", 'keywords');
-        //dashboard - tag expanse summary
-        $model_dashboard_report = new Tag('dashboard_report');
-        $model_dashboard_report->unsetAttributes();  // clear any default values
-        if (isset($_GET['Tag']))
-            $model_dashboard_report->attributes = $_GET['Tag'];
 
         $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
         $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
         $treeData = Tag::getHierarchicalReport($month, $year);
 
         $this->render('index', array(
-            'model_dashboard_report' => $model_dashboard_report,
             'treeData' => $treeData,
             'selectedMonth' => $month,
             'selectedYear' => $year,
