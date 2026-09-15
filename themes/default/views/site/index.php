@@ -118,7 +118,9 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                                                     <i class="fa fa-folder" style="color: #f0ad4e;"></i>
                                                 <?php else: ?>
                                                     <i class="fa fa-tag" style="color: #337ab7;"></i>
-                                                <?php endif; ?>
+<?php endif; ?>
+</section>
+<!-- end widget grid -->
                                                 <?php echo CHtml::encode($node['tag_name']); ?>
                                             </td>
                                             <td style="text-align: right;">
@@ -238,7 +240,33 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                 <div>
                     <!-- widget content -->
                     <div class="widget-body no-padding">
-                        <?php Transaction::getYearlyIncomeExpanse(); ?>
+                        <?php if (!empty($yearlyData)): ?>
+                            <div id="yearlyChart" style="min-width: 310px; height: 350px; margin: 0 auto;"></div>
+                            <div style="padding: 10px;">
+                                <table class="table table-bordered table-striped table-hover smart-form">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left;">Year</th>
+                                            <th style="text-align: right;">Income</th>
+                                            <th style="text-align: right;">Expense</th>
+                                            <th style="text-align: right;">Net Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($yearlyData as $row): ?>
+                                            <tr>
+                                                <td style="text-align: left;"><?php echo CHtml::encode($row['year']); ?></td>
+                                                <td style="text-align: right;"><?php echo number_format($row['total_income'], 0, '.', ','); ?></td>
+                                                <td style="text-align: right;"><?php echo number_format($row['total_expense'], 0, '.', ','); ?></td>
+                                                <td style="text-align: right;"><?php echo number_format($row['net_result'], 0, '.', ','); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="padding-10 text-center">No yearly data available yet.</div>
+                        <?php endif; ?>
                     </div>
                     <!-- end widget content -->
                 </div>
@@ -248,6 +276,66 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
         </article>
         <!-- WIDGET END -->
     </div>
-    <!-- end row -->ß
+    <!-- end row -->
 </section>
 <!-- end widget grid -->
+<?php if (!empty($yearlyData)): ?>
+    <script type="text/javascript">
+        $(function () {
+            var categories = [];
+            var incomeData = [];
+            var expenseData = [];
+            var netData = [];
+
+            <?php foreach (array_reverse($yearlyData) as $row): ?>
+                categories.push('<?php echo (int)$row['year']; ?>');
+                incomeData.push(<?php echo (float)$row['total_income']; ?>);
+                expenseData.push(<?php echo (float)$row['total_expense']; ?>);
+                netData.push(<?php echo (float)$row['net_result']; ?>);
+            <?php endforeach; ?>
+
+            $('#yearlyChart').highcharts({
+                chart: {
+                    type: 'column'
+                },
+                title: {
+                    text: 'Income vs Expenses by Year'
+                },
+                xAxis: {
+                    categories: categories,
+                    crosshair: true
+                },
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: 'Amount'
+                    }
+                },
+                tooltip: {
+                    shared: true,
+                    valuePrefix: ''
+                },
+                plotOptions: {
+                    column: {
+                        pointPadding: 0.2,
+                        borderWidth: 0
+                    }
+                },
+                series: [{
+                    name: 'Income',
+                    data: incomeData
+                }, {
+                    name: 'Expense',
+                    data: expenseData
+                }, {
+                    name: 'Net Balance',
+                    data: netData,
+                    type: 'line',
+                    marker: {
+                        enabled: true
+                    }
+                }]
+            });
+        });
+    </script>
+<?php endif; ?>

@@ -72,12 +72,14 @@ class SiteController extends Controller
         $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
         $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
         $treeData = Tag::getHierarchicalReport($month, $year);
+        $yearlyData = Transaction::getYearlyIncomeExpanse();
 
         $this->render('index', array(
             'model_dashboard_report' => $model_dashboard_report,
             'treeData' => $treeData,
             'selectedMonth' => $month,
             'selectedYear' => $year,
+            'yearlyData' => $yearlyData,
         ));
     }
 
