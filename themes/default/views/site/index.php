@@ -46,7 +46,7 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                 <header>
                     <span class="widget-icon"> <i class="fa fa-sitemap"></i> </span>
                     <h2 style="text-transform: uppercase;">Hierarchical Tag Report</h2>
-                    <div class="pull-right" style="padding: 8px 15px;">
+                    <div class="pull-right" style="padding: 1px 15px;">
                         <form class="smart-form" action="" method="get" style="display: inline;">
                             <select name="month" class="form-control input-xs" style="width: auto; display: inline;"
                                 onchange="this.form.submit()">
