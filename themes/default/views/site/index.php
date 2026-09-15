@@ -177,10 +177,24 @@ $this->breadcrumbs = array(
                                     <?php endfor; ?>
                                 </select>
                             </form>
+                            <button type="button" class="btn btn-xs btn-default" id="btn-expand-all">Expand All</button>
+                            <button type="button" class="btn btn-xs btn-default" id="btn-collapse-all">Collapse All</button>
                         </div>
                     </header>
                     <div>
                         <div class="widget-body no-padding">
+                            <style>
+                                .tree-child {
+                                    display: none;
+                                }
+                                .tree-toggle {
+                                    cursor: pointer;
+                                    display: inline-block;
+                                    width: 16px;
+                                    text-align: center;
+                                    margin-right: 4px;
+                                }
+                            </style>
                             <?php if (!empty($treeData)): ?>
                                 <table class="table table-bordered table-striped table-hover smart-form">
                                     <thead>
@@ -191,11 +205,24 @@ $this->breadcrumbs = array(
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($treeData as $node): ?>
-                                            <tr class="tree-node level-<?php echo $node['level']; ?>">
+                                        <?php foreach ($treeData as $node): 
+                                            $isRoot = empty($node['parent_tag']) || $node['parent_tag'] == 0;
+                                            $hasChildren = !empty($node['children']);
+                                            $rowClass = 'tree-node';
+                                            if (!$isRoot) {
+                                                $rowClass .= ' tree-child';
+                                            }
+                                            if ($hasChildren) {
+                                                $rowClass .= ' tree-parent';
+                                            }
+                                        ?>
+                                            <tr class="<?php echo $rowClass; ?>" data-id="<?php echo $node['id']; ?>" data-parent="<?php echo $node['parent_tag']; ?>">
                                                 <td style="text-align: left; padding-left: <?php echo ($node['level'] * 20 + 5); ?>px;">
-                                                    <?php if (!empty($node['children'])): ?>
-                                                        <i class="fa fa-folder-open" style="color: #f0ad4e;"></i>
+                                                    <?php if ($hasChildren): ?>
+                                                        <span class="tree-toggle">
+                                                            <i class="fa fa-plus-square"></i>
+                                                        </span>
+                                                        <i class="fa fa-folder" style="color: #f0ad4e;"></i>
                                                     <?php else: ?>
                                                         <i class="fa fa-tag" style="color: #337ab7;"></i>
                                                     <?php endif; ?>
@@ -217,6 +244,90 @@ $this->breadcrumbs = array(
                         </div>
                     </div>
                 </div>
+                <script>
+                $(document).ready(function() {
+                    $('.tree-child').hide();
+
+                    var parentChildrenMap = {};
+                    $('.tree-node').each(function() {
+                        var $row = $(this);
+                        var parentId = $row.data('parent');
+                        var id = $row.data('id');
+                        if (parentId) {
+                            if (!parentChildrenMap[parentId]) {
+                                parentChildrenMap[parentId] = [];
+                            }
+                            parentChildrenMap[parentId].push(id);
+                        }
+                    });
+
+                    $('.tree-toggle').click(function(e) {
+                        e.stopPropagation();
+                        var $parentRow = $(this).closest('.tree-node');
+                        var parentId = $parentRow.data('id');
+                        var $icon = $(this).find('i');
+                        var isExpanded = $parentRow.hasClass('tree-expanded');
+
+                        if (isExpanded) {
+                            collapseNode(parentId, parentChildrenMap);
+                            $parentRow.removeClass('tree-expanded');
+                            $icon.removeClass('fa-minus-square').addClass('fa-plus-square');
+                            $parentRow.find('.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder');
+                        } else {
+                            expandNode(parentId, parentChildrenMap);
+                            $parentRow.addClass('tree-expanded');
+                            $icon.removeClass('fa-plus-square').addClass('fa-minus-square');
+                            $parentRow.find('.fa-folder').removeClass('fa-folder').addClass('fa-folder-open');
+                        }
+                    });
+
+                    $('#btn-expand-all').click(function() {
+                        $('.tree-parent').each(function() {
+                            var $row = $(this);
+                            if (!$row.hasClass('tree-expanded')) {
+                                $row.find('.tree-toggle').click();
+                            }
+                        });
+                    });
+
+                    $('#btn-collapse-all').click(function() {
+                        $('.tree-parent').each(function() {
+                            var $row = $(this);
+                            if ($row.hasClass('tree-expanded')) {
+                                $row.find('.tree-toggle').click();
+                            }
+                        });
+                    });
+                });
+
+                function expandNode(parentId, map) {
+                    if (map[parentId]) {
+                        $.each(map[parentId], function(i, childId) {
+                            var $childRow = $('.tree-node[data-id="' + childId + '"]');
+                            $childRow.show();
+                            if ($childRow.hasClass('tree-parent')) {
+                                $childRow.addClass('tree-expanded');
+                                $childRow.find('.tree-toggle i').removeClass('fa-plus-square').addClass('fa-minus-square');
+                                expandNode(childId, map);
+                            }
+                        });
+                    }
+                }
+
+                function collapseNode(parentId, map) {
+                    if (map[parentId]) {
+                        $.each(map[parentId], function(i, childId) {
+                            var $childRow = $('.tree-node[data-id="' + childId + '"]');
+                            $childRow.hide();
+                            if ($childRow.hasClass('tree-parent')) {
+                                $childRow.removeClass('tree-expanded');
+                                $childRow.find('.tree-toggle i').removeClass('fa-minus-square').addClass('fa-plus-square');
+                                collapseNode(childId, map);
+                            }
+                        });
+                    }
+                }
+                </script>
             </article>
         </div>
         <!-- end row -->
