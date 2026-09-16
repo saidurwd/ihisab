@@ -9,6 +9,19 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/highcharts.j
 $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/highcharts-3d.js', CClientScript::POS_END);
 $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/exporting.js', CClientScript::POS_END);
 ?>
+<style>
+    #widget-grid .jarviswidget {
+        height: 500px;
+    }
+    #widget-grid .jarviswidget .widget-body {
+        height: 445px;
+        overflow-y: auto;
+    }
+    #widget-grid .jarviswidget#wid-id-monthly-trend .widget-body,
+    #widget-grid .jarviswidget#wid-id-expense-breakdown .widget-body {
+        overflow-y: visible;
+    }
+</style>
 <div class="row">
     <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
         <h1 class="page-title txt-color-blueDark">
