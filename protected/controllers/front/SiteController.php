@@ -132,19 +132,6 @@ class SiteController extends Controller
             Yii::app()->cache->set('dashboard_expense_chart_' . $userId, $expenseChartData, 600);
         }
 
-        $incomeChartData = Yii::app()->cache->get('dashboard_income_chart_' . $userId);
-        if ($incomeChartData === false) {
-            $incomeChartData = Transaction::dashboardIncomeChart();
-            Yii::app()->cache->set('dashboard_income_chart_' . $userId, $incomeChartData, 600);
-        }
-
-        $balanceChartData = Yii::app()->cache->get('dashboard_balance_chart_' . $userId);
-        if ($balanceChartData === false) {
-            $balanceChartData = Transaction::accountBalanceChart();
-            $balanceChartData = array_map('floatval', explode(',', trim($balanceChartData, ',')));
-            Yii::app()->cache->set('dashboard_balance_chart_' . $userId, $balanceChartData, 900);
-        }
-
         $this->render('index', array(
             'model_dashboard_report' => $model_dashboard_report,
             'treeData' => $treeData,
@@ -157,8 +144,6 @@ class SiteController extends Controller
             'monthlyTrendIncome' => $monthlyTrendIncome,
             'monthlyTrendExpense' => $monthlyTrendExpense,
             'expenseChartData' => $expenseChartData,
-            'incomeChartData' => $incomeChartData,
-            'balanceChartData' => $balanceChartData,
         ));
     }
 

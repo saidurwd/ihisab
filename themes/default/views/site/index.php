@@ -161,44 +161,6 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
 <!-- end row -->
 <!-- row -->
 <div class="row">
-    <article class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
-        <div class="jarviswidget" id="wid-id-income-breakdown" data-widget-editbutton="false">
-            <header>
-                <span class="widget-icon"> <i class="fa fa-pie-chart"></i> </span>
-                <h2 style="text-transform: uppercase;">Income by Category</h2>
-            </header>
-            <div>
-                <div class="widget-body no-padding">
-                    <?php if (!empty($incomeChartData)): ?>
-                        <div id="incomeBreakdownChart" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
-                    <?php else: ?>
-                        <div class="padding-10 text-center">No income data available for this month.</div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </article>
-    <article class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
-        <div class="jarviswidget" id="wid-id-balance-trend" data-widget-editbutton="false">
-            <header>
-                <span class="widget-icon"> <i class="fa fa-area-chart"></i> </span>
-                <h2 style="text-transform: uppercase;">Net Worth Trend (12 Months)</h2>
-            </header>
-            <div>
-                <div class="widget-body no-padding">
-                    <?php if (!empty($balanceChartData)): ?>
-                        <div id="balanceTrendChart" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
-                    <?php else: ?>
-                        <div class="padding-10 text-center">No balance data available yet.</div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </article>
-</div>
-<!-- end row -->
-<!-- row -->
-<div class="row">
         <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
             <div class="jarviswidget" id="wid-id-2" data-widget-editbutton="false">
                 <header>
@@ -571,88 +533,6 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                         name: 'Expense',
                         colorByPoint: true,
                         data: [<?php echo $expenseChartData; ?>]
-                    }]
-                });
-            });
-        </script>
-    <?php endif; ?>
-
-    <?php if (!empty($incomeChartData)): ?>
-        <script type="text/javascript">
-            $(function () {
-                $('#incomeBreakdownChart').highcharts({
-                    chart: {
-                        type: 'pie'
-                    },
-                    title: {
-                        text: 'Income by Category'
-                    },
-                    tooltip: {
-                        pointFormat: '{series.name}: <b>{point.y}</b>'
-                    },
-                    plotOptions: {
-                        pie: {
-                            allowPointSelect: true,
-                            cursor: 'pointer',
-                            dataLabels: {
-                                enabled: true,
-                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                                style: {
-                                    width: '120px'
-                                }
-                            }
-                        }
-                    },
-                    series: [{
-                        name: 'Income',
-                        colorByPoint: true,
-                        data: [<?php echo $incomeChartData; ?>]
-                    }]
-                });
-            });
-        </script>
-    <?php endif; ?>
-
-    <?php if (!empty($balanceChartData)): ?>
-        <script type="text/javascript">
-            $(function () {
-                var categories = [<?php echo Account::last_twelve_months(); ?>];
-                var data = <?php echo json_encode($balanceChartData); ?>;
-
-                $('#balanceTrendChart').highcharts({
-                    chart: {
-                        type: 'area'
-                    },
-                    title: {
-                        text: 'Net Worth Trend (12 Months)'
-                    },
-                    xAxis: {
-                        categories: categories,
-                        crosshair: true
-                    },
-                    yAxis: {
-                        title: {
-                            text: 'Amount'
-                        }
-                    },
-                    tooltip: {
-                        shared: true,
-                        valuePrefix: ''
-                    },
-                    plotOptions: {
-                        area: {
-                            stacking: 'normal',
-                            lineColor: '#666666',
-                            lineWidth: 1,
-                            marker: {
-                                lineWidth: 1,
-                                lineColor: '#666666'
-                            }
-                        }
-                    },
-                    series: [{
-                        name: 'Net Worth',
-                        data: data
                     }]
                 });
             });
