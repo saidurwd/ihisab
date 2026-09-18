@@ -330,8 +330,75 @@ class TransactionController extends Controller {
         if (isset($_GET['Transaction']))
             $model->attributes = $_GET['Transaction'];
 
+        $userId = Yii::app()->user->id;
+
+        $sparks = Yii::app()->cache->get('transaction_admin_sparks_' . $userId);
+        if ($sparks === false) {
+            $sparks = array(
+                'net_worth' => Transaction::get_net_worth(),
+                'budget_balance' => TransactionBudget::budget_balance_current_month(),
+                'income_this_month' => Transaction::get_income_current_month(),
+                'expense_this_month' => Transaction::get_expense_current_month(),
+                'saved_this_month' => Transaction::get_saved_current_month(),
+            );
+            Yii::app()->cache->set('transaction_admin_sparks_' . $userId, $sparks, 600);
+        }
+
+        $accountList = Yii::app()->cache->get('transaction_filter_accounts_' . $userId);
+        if ($accountList === false) {
+            $accountList = Account::model()->findAll(array(
+                'condition' => 'user=' . $userId,
+                'order' => 'account_name',
+            ));
+            Yii::app()->cache->set('transaction_filter_accounts_' . $userId, $accountList, 3600);
+        }
+
+        $tagFilter = Yii::app()->cache->get('transaction_filter_tags');
+        if ($tagFilter === false) {
+            $tagFilter = Tag::get_tag_new('Transaction', 'tag');
+            Yii::app()->cache->set('transaction_filter_tags', $tagFilter, 3600);
+        }
+
+        $gridTagMap = Yii::app()->cache->get('transaction_grid_tags_' . $userId);
+        if ($gridTagMap === false) {
+            $rawTags = Yii::app()->db->createCommand()
+                ->select('t.id, GROUP_CONCAT(t2.tag_name ORDER BY t2.tag_name SEPARATOR ", ") as tag_names')
+                ->from('{{transaction}} t')
+                ->join('{{transaction_tag}} tt', 't.id=tt.transaction')
+                ->join('{{tag}} t2', 't2.id=tt.tag')
+                ->where('t.user=' . $userId)
+                ->group('t.id')
+                ->queryAll();
+            $gridTagMap = array();
+            foreach ($rawTags as $row) {
+                $gridTagMap[$row['id']] = $row['tag_names'];
+            }
+            Yii::app()->cache->set('transaction_grid_tags_' . $userId, $gridTagMap, 300);
+        }
+
+        $gridAccountMap = Yii::app()->cache->get('transaction_grid_accounts_' . $userId);
+        if ($gridAccountMap === false) {
+            $rawAccounts = Yii::app()->db->createCommand()
+                ->select('t.id, GROUP_CONCAT(a.account_name ORDER BY a.account_name SEPARATOR ", ") as account_names')
+                ->from('{{transaction}} t')
+                ->join('{{account}} a', 'FIND_IN_SET(a.id, t.account)')
+                ->where('t.user=' . $userId . ' AND t.account IS NOT NULL AND t.account != ""')
+                ->group('t.id')
+                ->queryAll();
+            $gridAccountMap = array();
+            foreach ($rawAccounts as $row) {
+                $gridAccountMap[$row['id']] = $row['account_names'];
+            }
+            Yii::app()->cache->set('transaction_grid_accounts_' . $userId, $gridAccountMap, 300);
+        }
+
         $this->render('admin', array(
             'model' => $model,
+            'sparks' => $sparks,
+            'accountList' => $accountList,
+            'tagFilter' => $tagFilter,
+            'gridTagMap' => $gridTagMap,
+            'gridAccountMap' => $gridAccountMap,
         ));
     }
 
@@ -345,8 +412,62 @@ class TransactionController extends Controller {
         if (isset($_GET['Transaction']))
             $model->attributes = $_GET['Transaction'];
 
+        $userId = Yii::app()->user->id;
+
+        $tagFilter = Yii::app()->cache->get('transaction_filter_tags');
+        if ($tagFilter === false) {
+            $tagFilter = Tag::get_tag_new('Transaction', 'tag');
+            Yii::app()->cache->set('transaction_filter_tags', $tagFilter, 3600);
+        }
+
+        $accountList = Yii::app()->cache->get('transaction_filter_accounts_' . $userId);
+        if ($accountList === false) {
+            $accountList = Account::model()->findAll(array(
+                'condition' => 'user=' . $userId,
+                'order' => 'account_name',
+            ));
+            Yii::app()->cache->set('transaction_filter_accounts_' . $userId, $accountList, 3600);
+        }
+
+        $gridTagMap = Yii::app()->cache->get('transaction_grid_tags_' . $userId);
+        if ($gridTagMap === false) {
+            $rawTags = Yii::app()->db->createCommand()
+                ->select('t.id, GROUP_CONCAT(t2.tag_name ORDER BY t2.tag_name SEPARATOR ", ") as tag_names')
+                ->from('{{transaction}} t')
+                ->join('{{transaction_tag}} tt', 't.id=tt.transaction')
+                ->join('{{tag}} t2', 't2.id=tt.tag')
+                ->where('t.user=' . $userId . ' AND t.tag IS NOT NULL AND t.tag != ""')
+                ->group('t.id')
+                ->queryAll();
+            $gridTagMap = array();
+            foreach ($rawTags as $row) {
+                $gridTagMap[$row['id']] = $row['tag_names'];
+            }
+            Yii::app()->cache->set('transaction_grid_tags_' . $userId, $gridTagMap, 300);
+        }
+
+        $gridAccountMap = Yii::app()->cache->get('transaction_grid_accounts_' . $userId);
+        if ($gridAccountMap === false) {
+            $rawAccounts = Yii::app()->db->createCommand()
+                ->select('t.id, GROUP_CONCAT(a.account_name ORDER BY a.account_name SEPARATOR ", ") as account_names')
+                ->from('{{transaction}} t')
+                ->join('{{account}} a', 'FIND_IN_SET(a.id, t.account)')
+                ->where('t.user=' . $userId . ' AND t.account IS NOT NULL AND t.account != ""')
+                ->group('t.id')
+                ->queryAll();
+            $gridAccountMap = array();
+            foreach ($rawAccounts as $row) {
+                $gridAccountMap[$row['id']] = $row['account_names'];
+            }
+            Yii::app()->cache->set('transaction_grid_accounts_' . $userId, $gridAccountMap, 300);
+        }
+
         $this->render('tag', array(
             'model' => $model,
+            'tagFilter' => $tagFilter,
+            'accountList' => $accountList,
+            'gridTagMap' => $gridTagMap,
+            'gridAccountMap' => $gridAccountMap,
         ));
     }
 
@@ -360,8 +481,62 @@ class TransactionController extends Controller {
         if (isset($_GET['Transaction']))
             $model->attributes = $_GET['Transaction'];
 
+        $userId = Yii::app()->user->id;
+
+        $tagFilter = Yii::app()->cache->get('transaction_filter_tags');
+        if ($tagFilter === false) {
+            $tagFilter = Tag::get_tag_new('Transaction', 'tag');
+            Yii::app()->cache->set('transaction_filter_tags', $tagFilter, 3600);
+        }
+
+        $accountList = Yii::app()->cache->get('transaction_filter_accounts_' . $userId);
+        if ($accountList === false) {
+            $accountList = Account::model()->findAll(array(
+                'condition' => 'user=' . $userId,
+                'order' => 'account_name',
+            ));
+            Yii::app()->cache->set('transaction_filter_accounts_' . $userId, $accountList, 3600);
+        }
+
+        $gridTagMap = Yii::app()->cache->get('transaction_grid_tags_' . $userId);
+        if ($gridTagMap === false) {
+            $rawTags = Yii::app()->db->createCommand()
+                ->select('t.id, GROUP_CONCAT(t2.tag_name ORDER BY t2.tag_name SEPARATOR ", ") as tag_names')
+                ->from('{{transaction}} t')
+                ->join('{{transaction_tag}} tt', 't.id=tt.transaction')
+                ->join('{{tag}} t2', 't2.id=tt.tag')
+                ->where('t.user=' . $userId . ' AND t.tag IS NOT NULL AND t.tag != ""')
+                ->group('t.id')
+                ->queryAll();
+            $gridTagMap = array();
+            foreach ($rawTags as $row) {
+                $gridTagMap[$row['id']] = $row['tag_names'];
+            }
+            Yii::app()->cache->set('transaction_grid_tags_' . $userId, $gridTagMap, 300);
+        }
+
+        $gridAccountMap = Yii::app()->cache->get('transaction_grid_accounts_' . $userId);
+        if ($gridAccountMap === false) {
+            $rawAccounts = Yii::app()->db->createCommand()
+                ->select('t.id, GROUP_CONCAT(a.account_name ORDER BY a.account_name SEPARATOR ", ") as account_names')
+                ->from('{{transaction}} t')
+                ->join('{{account}} a', 'FIND_IN_SET(a.id, t.account)')
+                ->where('t.user=' . $userId . ' AND t.account IS NOT NULL AND t.account != ""')
+                ->group('t.id')
+                ->queryAll();
+            $gridAccountMap = array();
+            foreach ($rawAccounts as $row) {
+                $gridAccountMap[$row['id']] = $row['account_names'];
+            }
+            Yii::app()->cache->set('transaction_grid_accounts_' . $userId, $gridAccountMap, 300);
+        }
+
         $this->render('account', array(
             'model' => $model,
+            'tagFilter' => $tagFilter,
+            'accountList' => $accountList,
+            'gridTagMap' => $gridTagMap,
+            'gridAccountMap' => $gridAccountMap,
         ));
     }
 

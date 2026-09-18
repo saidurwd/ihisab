@@ -184,29 +184,22 @@ class Account extends CActiveRecord
         if ($cached !== false) {
             return $cached;
         }
-        //SELECT * FROM `os_transaction` WHERE account LIKE '1,%' AND transaction_type=3
-        $transfer_in = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
+
+        $row = Yii::app()->db->createCommand()
+            ->select('SUM(CASE WHEN transaction_type=3 AND account LIKE "' . $id . ',%" THEN amount ELSE 0 END) as transfer_in,
+                      SUM(CASE WHEN transaction_type=3 AND account LIKE "%,' . $id . '" THEN amount ELSE 0 END) as transfer_out,
+                      SUM(CASE WHEN transaction_type IN(2,4) AND account=' . $id . ' THEN amount ELSE 0 END) as income,
+                      SUM(CASE WHEN transaction_type IN(1) AND account=' . $id . ' THEN amount ELSE 0 END) as expense')
             ->from('{{transaction}}')
-            ->where('account LIKE "' . $id . ',%" AND transaction_type=3 AND user=' . $userId)
-            ->queryScalar();
-        //SELECT * FROM `os_transaction` WHERE account LIKE '%,1' AND transaction_type=3
-        $transfer_out = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('account LIKE "%,' . $id . '" AND transaction_type=3 AND user=' . $userId)
-            ->queryScalar();
-        $income = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('account=' . $id . ' AND transaction_type IN(2,4) AND user=' . $userId)
-            ->queryScalar();
-        $expance = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('account=' . $id . ' AND transaction_type IN(1) AND user=' . $userId)
-            ->queryScalar();
-        $balance = (($income - $expance) - $transfer_in + $transfer_out);
+            ->where('user=' . $userId)
+            ->queryRow();
+
+        $transfer_in = (float)$row['transfer_in'];
+        $transfer_out = (float)$row['transfer_out'];
+        $income = (float)$row['income'];
+        $expense = (float)$row['expense'];
+
+        $balance = (($income - $expense) - $transfer_in + $transfer_out);
         if ($modelAccount->account_type == 4) {
             $balance = ($modelAccount->credit_limit - abs($balance));
         }
@@ -231,27 +224,22 @@ class Account extends CActiveRecord
         if ($cached !== false) {
             return $cached;
         }
-        $transfer_in = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
+
+        $row = Yii::app()->db->createCommand()
+            ->select('SUM(CASE WHEN transaction_type=3 AND account LIKE "' . $id . ',%" THEN amount ELSE 0 END) as transfer_in,
+                      SUM(CASE WHEN transaction_type=3 AND account LIKE "%,' . $id . '" THEN amount ELSE 0 END) as transfer_out,
+                      SUM(CASE WHEN transaction_type IN(2,4) AND account=' . $id . ' THEN amount ELSE 0 END) as income,
+                      SUM(CASE WHEN transaction_type IN(1) AND account=' . $id . ' THEN amount ELSE 0 END) as expense')
             ->from('{{transaction}}')
-            ->where('account LIKE "' . $id . ',%" AND transaction_type=3 AND user=' . $userId)
-            ->queryScalar();
-        $transfer_out = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('account LIKE "%,' . $id . '" AND transaction_type=3 AND user=' . $userId)
-            ->queryScalar();
-        $income = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('account=' . $id . ' AND transaction_type IN(2,4) AND user=' . $userId)
-            ->queryScalar();
-        $expance = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('account=' . $id . ' AND transaction_type IN(1) AND user=' . $userId)
-            ->queryScalar();
-        $balance = (($income - $expance) - $transfer_in + $transfer_out);
+            ->where('user=' . $userId)
+            ->queryRow();
+
+        $transfer_in = (float)$row['transfer_in'];
+        $transfer_out = (float)$row['transfer_out'];
+        $income = (float)$row['income'];
+        $expense = (float)$row['expense'];
+
+        $balance = (($income - $expense) - $transfer_in + $transfer_out);
         $result = number_format($balance, 2, '.', '');
         Yii::app()->cache->set($cacheKey, $result, 300);
         return $result;

@@ -55,19 +55,19 @@ Yii::app()->clientScript->registerScript('re-install-date-picker', "
     <div class="col-xs-12 col-sm-5 col-md-5 col-lg-8">
         <ul id="sparks" class="">
             <li class="sparks-info">
-                <h5> NET WORTH <?php echo Transaction::get_net_worth(); ?></h5>
+                <h5> NET WORTH <?php echo $sparks['net_worth']; ?></h5>
             </li>
             <li class="sparks-info">
-                <h5> BUDGET BALANCE <?php echo TransactionBudget::budget_balance_current_month(); ?></h5>
+                <h5> BUDGET BALANCE <?php echo $sparks['budget_balance']; ?></h5>
             </li>
             <li class="sparks-info">
-                <h5> INCOME THIS MONTH <?php echo Transaction::get_income_current_month(); ?></h5>
+                <h5> INCOME THIS MONTH <?php echo $sparks['income_this_month']; ?></h5>
             </li>
             <li class="sparks-info">
-                <h5> EXPENSE THIS MONTH <?php echo Transaction::get_expense_current_month(); ?></h5>
+                <h5> EXPENSE THIS MONTH <?php echo $sparks['expense_this_month']; ?></h5>
             </li>
             <li class="sparks-info">
-                <h5> SAVED THIS MONTH <?php echo Transaction::get_saved_current_month(); ?></h5>
+                <h5> SAVED THIS MONTH <?php echo $sparks['saved_this_month']; ?></h5>
             </li>
         </ul>
     </div>
@@ -137,15 +137,15 @@ Yii::app()->clientScript->registerScript('re-install-date-picker', "
                                 array(
                                     'name' => 'tag',
                                     'type' => 'raw',
-                                    'value' => 'Tag::get_tags($data->id)',
-                                    'filter' => Tag::get_tag_new('Transaction', 'tag'),
+                                    'value' => 'isset($gridTagMap[$data->id]) ? $gridTagMap[$data->id] : Tag::get_tags($data->id)',
+                                    'filter' => $tagFilter,
                                     'htmlOptions' => array('class' => 'text-left'),
                                 ),
                                 array(
                                     'name' => 'account',
                                     'type' => 'raw',
-                                    'value' => 'Account::get_accounts($data->id)',
-                                    'filter' => CHtml::activeDropDownList($model, 'account', CHtml::listData(Account::model()->findAll(array('condition' => 'user=' . Yii::app()->user->id, 'order' => 'account_name')), 'id', 'account_name'), array('empty' => 'All', 'class' => 'select2')),
+                                    'value' => 'isset($gridAccountMap[$data->id]) ? $gridAccountMap[$data->id] : Account::get_accounts($data->id)',
+                                    'filter' => CHtml::activeDropDownList($model, 'account', CHtml::listData($accountList, 'id', 'account_name'), array('empty' => 'All', 'class' => 'select2')),
                                     'htmlOptions' => array('class' => 'text-left'),
                                 ),
                                 array(

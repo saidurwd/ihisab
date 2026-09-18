@@ -314,31 +314,59 @@ class Transaction extends CActiveRecord
 
     public static function dashboardExpenseChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'dashboard_expense_chart_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
         $array = Yii::app()->db->createCommand()
-            ->select('(SELECT IFNULL(SUM(b.amount),0) FROM {{transaction}} b WHERE FIND_IN_SET(t.id, b.tag) AND b.transaction_type IN(1) AND MONTH(b.created) = MONTH(NOW()) AND YEAR(b.created) = YEAR(NOW())) AS total, t.tag_name')
+            ->select('t.tag_name, SUM(tr.amount) as total')
             ->from('{{tag}} t')
-            ->where('t.user IN(0,' . Yii::app()->user->id . ')')
+            ->join('{{transaction_tag}} tt', 'tt.tag = t.id')
+            ->join('{{transaction}} tr', 'tr.id = tt.transaction AND tr.transaction_type IN(1) AND MONTH(tr.created) = MONTH(NOW()) AND YEAR(tr.created) = YEAR(NOW()) AND tr.user=' . $userId)
+            ->where('t.user IN(0,' . $userId . ')')
+            ->group('t.id, t.tag_name')
+            ->having('total > 0')
+            ->order('total DESC')
             ->queryAll();
+
         $return = null;
         foreach ($array as $key => $value) {
-            if ($value['total'] > 0)
-                $return .= "['" . $value['tag_name'] . "', " . $value['total'] . "],";
+            $return .= "['" . $value['tag_name'] . "', " . $value['total'] . "],";
         }
+
+        Yii::app()->cache->set($cacheKey, $return, 600);
         return $return;
     }
 
     public static function dashboardIncomeChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'dashboard_income_chart_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
         $array = Yii::app()->db->createCommand()
-            ->select('(SELECT IFNULL(SUM(b.amount),0) FROM {{transaction}} b WHERE FIND_IN_SET(t.id, b.tag) AND b.transaction_type IN(2,4) AND MONTH(b.created) = MONTH(NOW()) AND YEAR(b.created) = YEAR(NOW())) AS total, t.tag_name')
+            ->select('t.tag_name, SUM(tr.amount) as total')
             ->from('{{tag}} t')
-            ->where('t.user=' . Yii::app()->user->id)
+            ->join('{{transaction_tag}} tt', 'tt.tag = t.id')
+            ->join('{{transaction}} tr', 'tr.id = tt.transaction AND tr.transaction_type IN(2,4) AND MONTH(tr.created) = MONTH(NOW()) AND YEAR(tr.created) = YEAR(NOW()) AND tr.user=' . $userId)
+            ->where('t.user IN(0,' . $userId . ')')
+            ->group('t.id, t.tag_name')
+            ->having('total > 0')
+            ->order('total DESC')
             ->queryAll();
+
         $return = null;
         foreach ($array as $key => $value) {
-            if ($value['total'] > 0)
-                $return .= "['" . $value['tag_name'] . "', " . $value['total'] . "],";
+            $return .= "['" . $value['tag_name'] . "', " . $value['total'] . "],";
         }
+
+        Yii::app()->cache->set($cacheKey, $return, 600);
         return $return;
     }
 
@@ -354,96 +382,193 @@ class Transaction extends CActiveRecord
 
     public static function accountBalanceChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'chart_account_balance_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $rows = Yii::app()->db->createCommand()
+            ->select('YEAR(created) as year, MONTH(created) as month, 
+                      SUM(CASE WHEN transaction_type IN(2,4) THEN amount ELSE 0 END) as income,
+                      SUM(CASE WHEN transaction_type IN(1) THEN amount ELSE 0 END) as expense')
+            ->from('{{transaction}}')
+            ->where('user=' . $userId . ' AND created >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
+            ->group('YEAR(created), MONTH(created)')
+            ->order('year ASC, month ASC')
+            ->queryAll();
+
+        $monthlyData = array();
+        foreach ($rows as $row) {
+            $key = $row['year'] . '-' . str_pad($row['month'], 2, '0', STR_PAD_LEFT);
+            $monthlyData[$key] = array(
+                'income' => (float)$row['income'],
+                'expense' => (float)$row['expense'],
+            );
+        }
+
         $return = null;
+        $cumulative = 0;
         for ($t = 0; $t < 12; $t++) {
             $date = date("Y-m-t", strtotime(date('Y-m-01') . " -$t months"));
-            $return .= Account::get_balance_month_year($date) . ",";
+            $key = date('Y-m', strtotime($date));
+            if (isset($monthlyData[$key])) {
+                $cumulative += $monthlyData[$key]['income'] - $monthlyData[$key]['expense'];
+            }
+            $return .= number_format($cumulative, 2, '.', '') . ",";
         }
+
+        $return = implode(',', array_reverse(explode(',', trim($return, ','))));
+        Yii::app()->cache->set($cacheKey, $return, 900);
         return $return;
     }
 
     public static function accountBalanceComparisonChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'chart_account_balance_comp_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $rows = Yii::app()->db->createCommand()
+            ->select('YEAR(created) as year, MONTH(created) as month, 
+                      SUM(CASE WHEN transaction_type IN(2,4) THEN amount ELSE 0 END) as income,
+                      SUM(CASE WHEN transaction_type IN(1) THEN amount ELSE 0 END) as expense')
+            ->from('{{transaction}}')
+            ->where('user=' . $userId . ' AND created >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
+            ->group('YEAR(created), MONTH(created)')
+            ->order('year ASC, month ASC')
+            ->queryAll();
+
+        $monthlyData = array();
+        foreach ($rows as $row) {
+            $key = $row['year'] . '-' . str_pad($row['month'], 2, '0', STR_PAD_LEFT);
+            $monthlyData[$key] = (float)$row['income'] - (float)$row['expense'];
+        }
+
         $return = null;
         for ($t = 0; $t < 12; $t++) {
             $date = date("Y-m-t", strtotime(date('Y-m-01') . " -$t months"));
-            $return .= Account::get_balance_specific_month($date) . ",";
+            $key = date('Y-m', strtotime($date));
+            $value = isset($monthlyData[$key]) ? $monthlyData[$key] : 0;
+            $return .= number_format($value, 2, '.', '') . ",";
         }
+
+        $return = implode(',', array_reverse(explode(',', trim($return, ','))));
+        Yii::app()->cache->set($cacheKey, $return, 900);
         return $return;
-    }
-
-    public static function get_income_specific_month($date)
-    {
-        $balance = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('user=' . Yii::app()->user->id . ' AND transaction_type IN(2,4) AND MONTH(created) = MONTH("' . $date . '") AND YEAR(created) = YEAR("' . $date . '")')
-            ->queryScalar();
-
-        $balance = abs($balance);
-        $amount = number_format($balance, 2, '.', '');
-        return $amount;
     }
 
     public static function accountIncomeComparisonChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'chart_account_income_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $rows = Yii::app()->db->createCommand()
+            ->select('YEAR(created) as year, MONTH(created) as month, SUM(amount) as total')
+            ->from('{{transaction}}')
+            ->where('user=' . $userId . ' AND transaction_type IN(2,4) AND created >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
+            ->group('YEAR(created), MONTH(created)')
+            ->order('year ASC, month ASC')
+            ->queryAll();
+
+        $monthlyData = array();
+        foreach ($rows as $row) {
+            $key = $row['year'] . '-' . str_pad($row['month'], 2, '0', STR_PAD_LEFT);
+            $monthlyData[$key] = (float)$row['total'];
+        }
+
         $return = null;
         for ($t = 0; $t < 12; $t++) {
             $date = date("Y-m-t", strtotime(date('Y-m-01') . " -$t months"));
-            $return .= Transaction::get_income_specific_month($date) . ",";
+            $key = date('Y-m', strtotime($date));
+            $value = isset($monthlyData[$key]) ? $monthlyData[$key] : 0;
+            $return .= number_format($value, 2, '.', '') . ",";
         }
+
+        $return = implode(',', array_reverse(explode(',', trim($return, ','))));
+        Yii::app()->cache->set($cacheKey, $return, 900);
         return $return;
-    }
-
-    public static function get_expense_specific_month($date)
-    {
-        $balance = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('user=' . Yii::app()->user->id . ' AND transaction_type IN(1) AND MONTH(created) = MONTH("' . $date . '") AND YEAR(created) = YEAR("' . $date . '")')
-            ->queryScalar();
-
-        $balance = abs($balance);
-        $amount = number_format($balance, 2, '.', '');
-        return $amount;
     }
 
     public static function accountExpanceComparisonChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'chart_account_expense_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $rows = Yii::app()->db->createCommand()
+            ->select('YEAR(created) as year, MONTH(created) as month, SUM(amount) as total')
+            ->from('{{transaction}}')
+            ->where('user=' . $userId . ' AND transaction_type IN(1) AND created >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
+            ->group('YEAR(created), MONTH(created)')
+            ->order('year ASC, month ASC')
+            ->queryAll();
+
+        $monthlyData = array();
+        foreach ($rows as $row) {
+            $key = $row['year'] . '-' . str_pad($row['month'], 2, '0', STR_PAD_LEFT);
+            $monthlyData[$key] = (float)$row['total'];
+        }
+
         $return = null;
         for ($t = 0; $t < 12; $t++) {
             $date = date("Y-m-t", strtotime(date('Y-m-01') . " -$t months"));
-            $return .= Transaction::get_expense_specific_month($date) . ",";
+            $key = date('Y-m', strtotime($date));
+            $value = isset($monthlyData[$key]) ? $monthlyData[$key] : 0;
+            $return .= number_format($value, 2, '.', '') . ",";
         }
+
+        $return = implode(',', array_reverse(explode(',', trim($return, ','))));
+        Yii::app()->cache->set($cacheKey, $return, 900);
         return $return;
-    }
-
-    public static function get_worth_specific_month($date)
-    {
-        $income = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('user=' . Yii::app()->user->id . ' AND transaction_type IN(2,4) AND created <= "' . $date . '"')
-            ->queryScalar();
-
-        $expance = Yii::app()->db->createCommand()
-            ->select('IFNULL(SUM(amount),0)')
-            ->from('{{transaction}}')
-            ->where('user=' . Yii::app()->user->id . ' AND transaction_type IN(1) AND created <= "' . $date . '"')
-            ->queryScalar();
-        $balance = $income - $expance;
-
-        $amount = number_format($balance, 2, '.', '');
-        return $amount;
     }
 
     public static function accountWorthComparisonChart()
     {
+        $userId = Yii::app()->user->id;
+        $cacheKey = 'chart_account_worth_' . $userId;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $rows = Yii::app()->db->createCommand()
+            ->select('YEAR(created) as year, MONTH(created) as month, 
+                      SUM(CASE WHEN transaction_type IN(2,4) THEN amount ELSE 0 END) as income,
+                      SUM(CASE WHEN transaction_type IN(1) THEN amount ELSE 0 END) as expense')
+            ->from('{{transaction}}')
+            ->where('user=' . $userId . ' AND created >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
+            ->group('YEAR(created), MONTH(created)')
+            ->order('year ASC, month ASC')
+            ->queryAll();
+
+        $monthlyData = array();
+        foreach ($rows as $row) {
+            $key = $row['year'] . '-' . str_pad($row['month'], 2, '0', STR_PAD_LEFT);
+            $monthlyData[$key] = (float)$row['income'] - (float)$row['expense'];
+        }
+
         $return = null;
         for ($t = 0; $t < 12; $t++) {
             $date = date("Y-m-t", strtotime(date('Y-m-01') . " -$t months"));
-            $return .= Transaction::get_worth_specific_month($date) . ",";
+            $key = date('Y-m', strtotime($date));
+            $value = isset($monthlyData[$key]) ? $monthlyData[$key] : 0;
+            $return .= number_format($value, 2, '.', '') . ",";
         }
+
+        $return = implode(',', array_reverse(explode(',', trim($return, ','))));
+        Yii::app()->cache->set($cacheKey, $return, 900);
         return $return;
     }
 
@@ -561,5 +686,30 @@ class Transaction extends CActiveRecord
         return $command->queryAll();
     }
 
+    public static function get_income_specific_month($date)
+    {
+        $balance = Yii::app()->db->createCommand()
+            ->select('IFNULL(SUM(amount),0)')
+            ->from('{{transaction}}')
+            ->where('user=' . Yii::app()->user->id . ' AND transaction_type IN(2,4) AND MONTH(created) = MONTH("' . $date . '") AND YEAR(created) = YEAR("' . $date . '")')
+            ->queryScalar();
+
+        $balance = abs($balance);
+        $amount = number_format($balance, 2, '.', '');
+        return $amount;
+    }
+
+    public static function get_expense_specific_month($date)
+    {
+        $balance = Yii::app()->db->createCommand()
+            ->select('IFNULL(SUM(amount),0)')
+            ->from('{{transaction}}')
+            ->where('user=' . Yii::app()->user->id . ' AND transaction_type IN(1) AND MONTH(created) = MONTH("' . $date . '") AND YEAR(created) = YEAR("' . $date . '")')
+            ->queryScalar();
+
+        $balance = abs($balance);
+        $amount = number_format($balance, 2, '.', '');
+        return $amount;
+    }
 
 }

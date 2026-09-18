@@ -203,8 +203,8 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                                 array(
                                     'name' => 'tag',
                                     'type' => 'raw',
-                                    'value' => 'Tag::get_tags($data->id)',
-                                    'filter' => Tag::get_tag_new('Transaction', 'tag'),
+                                    'value' => 'isset($gridTagMap[$data->id]) ? $gridTagMap[$data->id] : Tag::get_tags($data->id)',
+                                    'filter' => $tagFilter,
                                     'htmlOptions' => array(
                                         'style' => "text-align:left;",
                                         'title' => 'Tags'
@@ -213,14 +213,8 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                                 array(
                                     'name' => 'account',
                                     'type' => 'raw',
-                                    'value' => 'Account::get_accounts($data->id)',
-                                    'filter' => CHtml::activeDropDownList($model, 'account', CHtml::listData(Account::model()->findAll(array(
-                                                        'condition' => 'user=' . Yii::app()->user->id,
-                                                        'order' => 'account_name'
-                                                    )), 'id', 'account_name'), array(
-                                        'empty' => 'All',
-                                        'class' => 'select2'
-                                    )),
+                                    'value' => 'isset($gridAccountMap[$data->id]) ? $gridAccountMap[$data->id] : Account::get_accounts($data->id)',
+                                    'filter' => CHtml::activeDropDownList($model, 'account', CHtml::listData($accountList, 'id', 'account_name'), array('empty' => 'All', 'class' => 'select2')),
                                     'htmlOptions' => array(
                                         'style' => "text-align:left;",
                                         'title' => 'Account'
