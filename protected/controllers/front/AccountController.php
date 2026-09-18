@@ -190,8 +190,58 @@ class AccountController extends Controller {
         if (isset($_GET['Account']))
             $model->attributes = $_GET['Account'];
 
+        $userId = Yii::app()->user->id;
+        $accountTypes = Yii::app()->cache->get('account_filter_types');
+        if ($accountTypes === false) {
+            $accountTypes = AccountType::model()->findAll(array('condition' => 'status=1', 'order' => 'title'));
+            Yii::app()->cache->set('account_filter_types', $accountTypes, 3600);
+        }
+
+        $currencies = Yii::app()->cache->get('account_filter_currencies');
+        if ($currencies === false) {
+            $currencies = Currency::model()->findAll(array('condition' => 'published=1', 'order' => 'currency_name'));
+            Yii::app()->cache->set('account_filter_currencies', $currencies, 3600);
+        }
+
+        $balanceChartData = Yii::app()->cache->get('account_chart_balance_' . $userId);
+        if ($balanceChartData === false) {
+            $balanceChartData = Transaction::accountBalanceChart();
+            Yii::app()->cache->set('account_chart_balance_' . $userId, $balanceChartData, 900);
+        }
+
+        $incomeComparisonData = Yii::app()->cache->get('account_chart_income_' . $userId);
+        if ($incomeComparisonData === false) {
+            $incomeComparisonData = Transaction::accountIncomeComparisonChart();
+            Yii::app()->cache->set('account_chart_income_' . $userId, $incomeComparisonData, 900);
+        }
+
+        $expenseComparisonData = Yii::app()->cache->get('account_chart_expense_' . $userId);
+        if ($expenseComparisonData === false) {
+            $expenseComparisonData = Transaction::accountExpanceComparisonChart();
+            Yii::app()->cache->set('account_chart_expense_' . $userId, $expenseComparisonData, 900);
+        }
+
+        $balanceComparisonData = Yii::app()->cache->get('account_chart_balance_comp_' . $userId);
+        if ($balanceComparisonData === false) {
+            $balanceComparisonData = Transaction::accountBalanceComparisonChart();
+            Yii::app()->cache->set('account_chart_balance_comp_' . $userId, $balanceComparisonData, 900);
+        }
+
+        $worthComparisonData = Yii::app()->cache->get('account_chart_worth_' . $userId);
+        if ($worthComparisonData === false) {
+            $worthComparisonData = Transaction::accountWorthComparisonChart();
+            Yii::app()->cache->set('account_chart_worth_' . $userId, $worthComparisonData, 900);
+        }
+
         $this->render('admin', array(
             'model' => $model,
+            'accountTypes' => $accountTypes,
+            'currencies' => $currencies,
+            'balanceChartData' => $balanceChartData,
+            'incomeComparisonData' => $incomeComparisonData,
+            'expenseComparisonData' => $expenseComparisonData,
+            'balanceComparisonData' => $balanceComparisonData,
+            'worthComparisonData' => $worthComparisonData,
         ));
     }
 

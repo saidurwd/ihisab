@@ -179,6 +179,11 @@ class Account extends CActiveRecord
     {
         $modelAccount = Account::model()->findByPk($id);
         $userId = (int)$modelAccount->user;
+        $cacheKey = 'account_balance_' . $userId . '_' . $id;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
         //SELECT * FROM `os_transaction` WHERE account LIKE '1,%' AND transaction_type=3
         $transfer_in = Yii::app()->db->createCommand()
             ->select('IFNULL(SUM(amount),0)')
@@ -208,17 +213,24 @@ class Account extends CActiveRecord
         if ($balance < 0) {
             $balance = abs($balance);
             $amount = number_format($balance, 2, '.', ',');
-            return '<span class="text-danger"><i class="fa-fw fa fa-minus"></i> ' . $amount . '</span>';
+            $result = '<span class="text-danger"><i class="fa-fw fa fa-minus"></i> ' . $amount . '</span>';
         } else {
             $amount = number_format($balance, 2, '.', ',');
-            return '<span class="text-success"><i class="fa-fw fa fa-plus"></i> ' . $amount . '</span>';
+            $result = '<span class="text-success"><i class="fa-fw fa fa-plus"></i> ' . $amount . '</span>';
         }
+        Yii::app()->cache->set($cacheKey, $result, 300);
+        return $result;
     }
 
     public static function get_balance_chart($id)
     {
         $modelAccount = Account::model()->findByPk($id);
         $userId = (int)$modelAccount->user;
+        $cacheKey = 'account_balance_chart_' . $userId . '_' . $id;
+        $cached = Yii::app()->cache->get($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
         $transfer_in = Yii::app()->db->createCommand()
             ->select('IFNULL(SUM(amount),0)')
             ->from('{{transaction}}')
@@ -240,7 +252,9 @@ class Account extends CActiveRecord
             ->where('account=' . $id . ' AND transaction_type IN(1) AND user=' . $userId)
             ->queryScalar();
         $balance = (($income - $expance) - $transfer_in + $transfer_out);
-        return number_format($balance, 2, '.', '');
+        $result = number_format($balance, 2, '.', '');
+        Yii::app()->cache->set($cacheKey, $result, 300);
+        return $result;
     }
 
     public static function last_twelve_months()

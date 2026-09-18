@@ -155,14 +155,14 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
                                 array(
                                     'name' => 'account_type',
                                     'type' => 'raw',
-                                    'filter' => CHtml::activeDropDownList($model, 'account_type', CHtml::listData(AccountType::model()->findAll(array('condition' => 'status=1', 'order' => 'title')), 'id', 'title'), array('empty' => 'All', 'class' => 'form-control')),
+                                    'filter' => CHtml::activeDropDownList($model, 'account_type', CHtml::listData($accountTypes, 'id', 'title'), array('empty' => 'All', 'class' => 'form-control')),
                                     'value' => 'AccountType::get_type($data->account_type)',
                                     'htmlOptions' => array('style' => "text-align:left;", 'title' => 'Type'),
                                 ),
                                 array(
                                     'name' => 'currency',
                                     'type' => 'raw',
-                                    'filter' => CHtml::activeDropDownList($model, 'currency', CHtml::listData(Currency::model()->findAll(array('condition' => 'published=1', 'order' => 'currency_name')), 'id', 'currency_name'), array('empty' => 'All', 'class' => 'form-control')),
+                                    'filter' => CHtml::activeDropDownList($model, 'currency', CHtml::listData($currencies, 'id', 'currency_name'), array('empty' => 'All', 'class' => 'form-control')),
                                     'value' => 'Currency::get_currency($data->currency)',
                                     'htmlOptions' => array('style' => "text-align:left;", 'title' => 'Currency'),
                                 ),
@@ -248,7 +248,7 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
             },
             series: [{
                     name: 'Balances',
-                    data: [<?php echo Transaction::accountBalanceChart(); ?>]
+                    data: [<?php echo $balanceChartData; ?>]
                 }]
         });
         $('#comparisonChart').highcharts({
@@ -283,16 +283,16 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
             },
             series: [{
                     name: 'Income',
-                    data: [<?php echo Transaction::accountIncomeComparisonChart(); ?>]
+                    data: [<?php echo $incomeComparisonData; ?>]
                 }, {
                     name: 'Expence',
-                    data: [<?php echo Transaction::accountExpanceComparisonChart(); ?>]
+                    data: [<?php echo $expenseComparisonData; ?>]
                 }, {
                     name: 'Balances',
-                    data: [<?php echo Transaction::accountBalanceComparisonChart(); ?>]
+                    data: [<?php echo $balanceComparisonData; ?>]
                 }, {
                     name: 'Net Worth',
-                    data: [<?php echo Transaction::accountWorthComparisonChart(); ?>]
+                    data: [<?php echo $worthComparisonData; ?>]
                 }]
         });
     });
