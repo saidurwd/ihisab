@@ -88,7 +88,7 @@ class SiteController extends Controller
         $accounts = Yii::app()->cache->get('dashboard_accounts_' . $userId);
         if ($accounts === false) {
             $accounts = Account::model()->findAll(array(
-                'condition' => 'user=' . $userId,
+                'condition' => 'user=' . $userId . ' AND status="Active"',
             ));
             Yii::app()->cache->set('dashboard_accounts_' . $userId, $accounts, 600);
         }
@@ -98,7 +98,7 @@ class SiteController extends Controller
             $recentTransactions = Transaction::model()->findAll(array(
                 'condition' => 'user=' . $userId,
                 'order' => 'created DESC',
-                'limit' => 10,
+                'limit' => 15,
             ));
             Yii::app()->cache->set('dashboard_recent_' . $userId, $recentTransactions, 300);
         }
