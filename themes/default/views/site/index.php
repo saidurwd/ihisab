@@ -252,7 +252,7 @@ $cs->registerScriptFile(Yii::app()->theme->baseUrl . '/highchart404/modules/expo
 <?php else: ?>
     <i class="fa fa-tag" style="color: #337ab7;"></i>
 <?php endif; ?>
-<?php echo CHtml::encode($node['tag_name']); ?>
+<?php echo CHtml::link(CHtml::encode($node['tag_name']), array('transaction/tag', 'id' => $node['id'])); ?>
                                             </td>
                                             <td style="text-align: right;">
                                                 <?php echo Transaction::get_amount(1, $node['expense_total']); ?>
