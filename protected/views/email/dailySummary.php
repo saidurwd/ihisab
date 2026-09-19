@@ -71,13 +71,13 @@
         <?php endif; ?>
 
         <p>
-            <a href="<?php echo Yii::app()->createUrl('transaction/admin'); ?>" style="color: #337ab7; text-decoration: none;">View All Transactions &rarr;</a>
+            <a href="<?php echo Yii::app()->params['baseUrl']; ?>?r=transaction/admin" style="color: #337ab7; text-decoration: none;">View All Transactions &rarr;</a>
         </p>
 
         <div class="footer">
             <p>You are receiving this email because you have enabled daily summaries in your account settings.</p>
             <p>
-                <a href="<?php echo Yii::app()->createUrl('user/emailPreferences'); ?>">Manage email preferences</a>
+                <a href="<?php echo Yii::app()->params['baseUrl']; ?>?r=user/emailPreferences">Manage email preferences</a>
             </p>
         </div>
     </div>
