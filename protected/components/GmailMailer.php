@@ -36,7 +36,7 @@ class GmailMailer extends CApplicationComponent
         $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
         $body .= chunk_split(base64_encode($htmlBody)) . "\r\n";
 
-        $body = "--{$boundary}--\r\n";
+        $body .= "--{$boundary}--\r\n";
 
         $crlf = "\r\n";
         $toHeader = str_replace($crlf, '', $to);
