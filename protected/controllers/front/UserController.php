@@ -35,7 +35,7 @@ class UserController extends Controller {
                 'users' => array('*'),
             ),
             array('allow', // allow authenticated user to perform 'create' and 'update' actions
-                'actions' => array('create', 'update', 'setting'),
+                'actions' => array('create', 'update', 'setting', 'emailPreferences'),
                 'users' => array('@'),
             ),
             array('allow', // allow admin user to perform 'admin' and 'delete' actions
@@ -401,6 +401,21 @@ class UserController extends Controller {
             echo CActiveForm::validate($model);
             Yii::app()->end();
         }
+    }
+
+    public function actionEmailPreferences() {
+        $userId = Yii::app()->user->id;
+        $pref = EmailPreference::getPreference($userId);
+
+        if (isset($_POST['EmailPreference'])) {
+            $pref->attributes = $_POST['EmailPreference'];
+            $pref->user_id = $userId;
+            $pref->save();
+            Yii::app()->user->setFlash('success', 'Email preferences updated successfully.');
+            $this->redirect(array('emailPreferences'));
+        }
+
+        $this->render('emailPreferences', array('model' => $pref));
     }
 
 }

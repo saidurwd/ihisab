@@ -63,6 +63,13 @@ return array(
             'class' => 'CFileCache',
             'cachePath' => dirname(__FILE__) . '/../runtime/cache',
         ),
+        'mailer' => array(
+            'class' => 'GmailMailer',
+            'username' => 'info@saidur-rahman.com',
+            'password' => 'your-app-password',
+            'fromEmail' => 'info@saidur-rahman.com',
+            'fromName' => 'iHisab',
+        ),
         'errorHandler' => array(
             // use 'site/error' action to display errors
             'errorAction' => 'site/error',

@@ -42,4 +42,64 @@ class CronCommand extends CConsoleCommand {
         $this->sendMail($recipients, $subject, $body, $fromNames, $fromMails);
     }
 
+    /**
+     * Send daily transaction summary emails
+     * Usage: php yiic.php cron dailySummary
+     */
+    public function actionDailySummary() {
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $service = new DailySummaryService();
+
+        $users = User::model()->findAll();
+        foreach ($users as $user) {
+            $pref = EmailPreference::getPreference($user->id);
+            if (!$pref->enabled || $pref->frequency !== 'daily') {
+                continue;
+            }
+
+            if ($pref->last_sent_at && date('Y-m-d', strtotime($pref->last_sent_at)) === date('Y-m-d')) {
+                continue;
+            }
+
+            $summary = $service->buildSummary($user->id, $yesterday);
+            if ($summary === null) {
+                $log = new EmailLog();
+                $log->user_id = $user->id;
+                $log->email = $user->email;
+                $log->subject = 'Daily Transaction Summary - ' . date('M d, Y', strtotime($yesterday));
+                $log->status = 'skipped';
+                $log->save();
+                continue;
+            }
+
+            $rendered = Yii::app()->controller->renderPartial('//email/dailySummary', array(
+                'user' => $user,
+                'summary' => $summary,
+                'date' => $yesterday,
+            ), true);
+
+            $sent = $this->sendMail(
+                $user->email,
+                'Daily Transaction Summary - ' . date('M d, Y', strtotime($yesterday)),
+                $rendered,
+                Yii::app()->params['adminName'],
+                Yii::app()->params['adminEmail']
+            );
+
+            $log = new EmailLog();
+            $log->user_id = $user->id;
+            $log->email = $user->email;
+            $log->subject = 'Daily Transaction Summary - ' . date('M d, Y', strtotime($yesterday));
+            $log->status = $sent ? 'sent' : 'failed';
+            $log->save();
+
+            if ($sent) {
+                $pref->last_sent_at = date('Y-m-d H:i:s');
+                $pref->save();
+            }
+        }
+
+        echo "Daily summary job completed.\n";
+    }
+
 }
