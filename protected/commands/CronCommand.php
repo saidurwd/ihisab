@@ -49,6 +49,7 @@ class CronCommand extends CConsoleCommand {
     public function actionDailySummary() {
         $yesterday = date('Y-m-d', strtotime('-1 day'));
         $service = new DailySummaryService();
+        $mailer = Yii::app()->mailer;
 
         $users = User::model()->findAll();
         foreach ($users as $user) {
@@ -72,24 +73,21 @@ class CronCommand extends CConsoleCommand {
                 continue;
             }
 
-            $rendered = Yii::app()->controller->renderPartial('//email/dailySummary', array(
+            $data = array(
                 'user' => $user,
                 'summary' => $summary,
                 'date' => $yesterday,
-            ), true);
-
-            $sent = $this->sendMail(
-                $user->email,
-                'Daily Transaction Summary - ' . date('M d, Y', strtotime($yesterday)),
-                $rendered,
-                Yii::app()->params['adminName'],
-                Yii::app()->params['adminEmail']
             );
+            $viewFile = Yii::getPathOfAlias('application.views.email.dailySummary') . '.php';
+            $rendered = $this->renderViewFile($viewFile, $data);
+
+            $subject = 'Daily Transaction Summary - ' . date('M d, Y', strtotime($yesterday));
+            $sent = $mailer->sendEmail($user->email, $subject, $rendered);
 
             $log = new EmailLog();
             $log->user_id = $user->id;
             $log->email = $user->email;
-            $log->subject = 'Daily Transaction Summary - ' . date('M d, Y', strtotime($yesterday));
+            $log->subject = $subject;
             $log->status = $sent ? 'sent' : 'failed';
             $log->save();
 
@@ -100,6 +98,61 @@ class CronCommand extends CConsoleCommand {
         }
 
         echo "Daily summary job completed.\n";
+    }
+
+    /**
+     * Send a single test email to a user
+     * Usage: php yiic.php cron testEmail userId
+     */
+    public function actionTestEmail($userId) {
+        $user = User::model()->findByPk($userId);
+        if (!$user) {
+            echo "User {$userId} not found.\n";
+            return;
+        }
+
+        $service = new DailySummaryService();
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $summary = $service->buildSummary($user->id, $yesterday);
+        if ($summary === null) {
+            $summary = array(
+                'date' => $yesterday,
+                'total_count' => 0,
+                'total_income' => 0,
+                'total_expense' => 0,
+                'net' => 0,
+                'expense_by_tag' => array(),
+                'income_by_tag' => array(),
+            );
+        }
+
+        $data = array(
+            'user' => $user,
+            'summary' => $summary,
+            'date' => $yesterday,
+        );
+        $viewFile = Yii::getPathOfAlias('application.views.email.dailySummary') . '.php';
+        $rendered = $this->renderViewFile($viewFile, $data);
+
+        $subject = 'Test Email - Daily Transaction Summary';
+        $sent = Yii::app()->mailer->sendEmail($user->email, $subject, $rendered);
+
+        $log = new EmailLog();
+        $log->user_id = $user->id;
+        $log->email = $user->email;
+        $log->subject = $subject;
+        $log->status = $sent ? 'sent' : 'failed';
+        $log->save();
+
+        echo $sent ? "Test email sent to {$user->email}\n" : "Test email failed for {$user->email}\n";
+    }
+
+    protected function renderViewFile($viewFile, $data)
+    {
+        extract($data, EXTR_SKIP);
+        ob_start();
+        include $viewFile;
+        return ob_get_clean();
     }
 
 }

@@ -15,16 +15,21 @@ return array(
     // application components
     'components' => array(
         'db' => array(
-            'connectionString' => 'sqlite:' . dirname(__FILE__) . '/../data/testdrive.db',
-        ),
-        // uncomment the following to use a MySQL database
-        'db' => array(
-            'connectionString' => 'mysql:host=localhost;dbname=optimocms',
+            'connectionString' => 'mysql:host=localhost;dbname=ihisab',
             'emulatePrepare' => true,
             'username' => 'root',
-            'password' => '',
+            'password' => 'root',
             'charset' => 'utf8',
             'tablePrefix' => 'os_'
+        ),
+        'mailer' => array(
+            'class' => 'GmailMailer',
+            'username' => 'info@saidur-rahman.com',
+            'password' => 'your-app-password',
+            'fromEmail' => 'info@saidur-rahman.com',
+            'fromName' => 'iHisab',
+            'port' => 465,
+            'secure' => 'ssl',
         ),
         'log' => array(
             'class' => 'CLogRouter',

@@ -3,18 +3,18 @@
 class GmailMailer extends CApplicationComponent
 {
     public $host = 'smtp.gmail.com';
-    public $port = 587;
+    public $port = 465;
     public $username;
     public $password;
     public $fromEmail;
     public $fromName = 'iHisab';
-    public $secure = 'tls';
+    public $secure = 'ssl';
 
     public function sendEmail($to, $subject, $htmlBody, $textBody = null)
     {
         $textBody = $textBody ?: strip_tags($htmlBody);
         $fromEmail = $this->fromEmail;
-        $fromName = $this->fromName;
+        $fromName = $this->fromName ?: $this->username;
 
         $boundary = '----=_NextPart_' . md5(time() . $fromEmail);
 
@@ -37,6 +37,53 @@ class GmailMailer extends CApplicationComponent
 
         $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 
-        return mail($to, $subject, $body, $headers, "-f{$fromEmail}");
+        $crlf = "\r\n";
+        $toHeader = str_replace($crlf, '', $to);
+
+        $context = stream_context_create(array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            )
+        ));
+
+        $remote = 'ssl://' . $this->host;
+        $socket = @stream_socket_client($remote . ':' . $this->port, $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $context);
+        if (!$socket) {
+            Yii::log("SMTP connect failed: {$errstr} ({$errno})", CLogger::LEVEL_ERROR, 'mail');
+            return false;
+        }
+
+        $line = fgets($socket, 515);
+        if (strpos($line, '220') !== 0) {
+            Yii::log("SMTP greeting failed: {$line}", CLogger::LEVEL_ERROR, 'mail');
+            fclose($socket);
+            return false;
+        }
+
+        $this->smtpCommand($socket, 'HELO ' . $this->host);
+        $this->smtpCommand($socket, 'AUTH LOGIN');
+        $this->smtpCommand($socket, base64_encode($this->username));
+        $this->smtpCommand($socket, base64_encode($this->password));
+        $this->smtpCommand($socket, 'MAIL FROM:<' . $fromEmail . '>');
+        $this->smtpCommand($socket, 'RCPT TO:<' . $toHeader . '>');
+        $this->smtpCommand($socket, 'DATA');
+        fwrite($socket, "To: {$toHeader}{$crlf}" . $headers . $crlf . $body . $crlf . ".\r\n");
+        $this->smtpCommand($socket, '.');
+        $this->smtpCommand($socket, 'QUIT');
+        fclose($socket);
+
+        return true;
+    }
+
+    protected function smtpCommand($socket, $command)
+    {
+        fwrite($socket, $command . "\r\n");
+        $line = fgets($socket, 515);
+        if (strpos($line, '250') !== 0 && strpos($line, '354') !== 0 && strpos($line, '235') !== 0) {
+            Yii::log("SMTP error: {$line} for command: {$command}", CLogger::LEVEL_ERROR, 'mail');
+        }
+        return $line;
     }
 }
