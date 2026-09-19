@@ -18,8 +18,11 @@ class GmailMailer extends CApplicationComponent
 
         $boundary = '----=_NextPart_' . md5(time() . $fromEmail);
 
+        $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+
         $headers = "From: {$fromName}<{$fromEmail}>\r\n";
         $headers .= "Reply-To: {$fromEmail}\r\n";
+        $headers .= "Subject: {$subject}\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
 
@@ -33,9 +36,7 @@ class GmailMailer extends CApplicationComponent
         $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
         $body .= chunk_split(base64_encode($htmlBody)) . "\r\n";
 
-        $body .= "--{$boundary}--\r\n";
-
-        $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+        $body = "--{$boundary}--\r\n";
 
         $crlf = "\r\n";
         $toHeader = str_replace($crlf, '', $to);
