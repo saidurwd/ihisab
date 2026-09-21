@@ -66,7 +66,7 @@ return array(
         'mailer' => array(
             'class' => 'GmailMailer',
             'username' => 'info@saidur-rahman.com',
-            'password' => 'your-app-password',
+            'password' => 'your-app-password', // Use an app password if 2FA is enabled
             'fromEmail' => 'info@saidur-rahman.com',
             'fromName' => 'iHisab',
         ),
@@ -96,6 +96,7 @@ return array(
         // this is used in contact page
         'adminName' => 'iHisab',
         'adminEmail' => 'info@ihisab.com',
+        'baseUrl' => 'http://www.ihisab.com/index.php',
         'pageSize' => 10,
         'pageSize20' => 20,
         'pageSize30' => 30,

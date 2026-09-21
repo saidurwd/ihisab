@@ -25,7 +25,7 @@ return array(
         'mailer' => array(
             'class' => 'GmailMailer',
             'username' => 'info@saidur-rahman.com',
-            'password' => 'your-app-password',
+            'password' => 'your-app-password', // Use an app password if 2FA is enabled
             'fromEmail' => 'info@saidur-rahman.com',
             'fromName' => 'iHisab',
             'port' => 465,
@@ -46,5 +46,6 @@ return array(
         // this is used in contact page
         'adminName' => 'Optimo CMS',
         'adminEmail' => 'info@optimosolution.com',
+        'baseUrl' => 'https://www.ihisab.com/index.php',
     ),
 );
